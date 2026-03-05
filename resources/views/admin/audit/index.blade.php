@@ -1,0 +1,653 @@
+@php /** @var \App\Models\User $user */ $user = Auth::user(); @endphp
+@extends('layouts.app')
+
+@section('content')
+    <div class="container-fluid py-4">
+        <div class="row mb-4">
+            <div class="col-xl-7">
+                <div class="d-flex align-items-center mb-1">
+
+                    <a href="{{ route($routePrefix . 'reports') }}" class="btn btn-outline-brown me-3 shadow-sm"
+                        style="border-radius: 10px; padding: 0.5rem 0.75rem;">
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                    <h1 class="fw-bold mb-0" style="color: var(--color-primary-dark);">
+                        <i class="fas fa-clipboard-list me-2"></i>{{ __('admin.logs_report') }}
+                    </h1>
+                </div>
+                <p class="text-muted mb-0 ms-5 ps-3">{{ __('admin.audit_log_desc') }}</p>
+            </div>
+            <div class="col-xl-5 d-flex gap-2 justify-content-xl-end justify-content-start align-items-center mt-3 mt-xl-0">
+                {{-- Maintenance Dropdown (Superadmin/Admin Only) --}}
+                @if(in_array($user?->role?->name, ['superadmin', 'admin']))
+                    <div class="dropdown">
+                        <button class="btn btn-outline-danger shadow-sm d-flex align-items-center" type="button" id="maintenanceDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 10px; padding: 0.5rem 1rem; font-weight: 600;">
+                            <i class="fas fa-tools me-2"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="maintenanceDropdown" style="border-radius: 12px; padding: 0.5rem;">
+                            <li>
+                                <button class="dropdown-item py-2 px-3 text-danger d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#clearLogsModal" onclick="setClearType('backup_clear')" style="border-radius: 8px;">
+                                    <i class="fas fa-file-export me-2"></i> {{ __('admin.backup_and_clear') ?? 'Backup & Hapus Semua' }}
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                @endif
+
+                {{-- Filter Button --}}
+                <button class="btn btn-outline-brown shadow-sm" data-bs-toggle="modal"
+                    data-bs-target="#filterModal" style="border-radius: 10px; padding: 0.5rem 1rem; font-weight: 600;">
+                    <i class="fas fa-filter me-2"></i> {{ __('common.filter') }}
+                </button>
+
+                {{-- Export Group --}}
+                <div class="btn-group shadow-sm" style="border-radius: 10px; overflow: hidden;">
+                    <button class="btn btn-outline-brown border-end-0" onclick="exportReport('pdf')"
+                        style="padding: 0.5rem 1rem; font-weight: 600; border-top-right-radius: 0; border-bottom-right-radius: 0;">
+                        <i class="fas fa-file-pdf me-2"></i> PDF
+                    </button>
+                    <button class="btn btn-brown" onclick="exportReport('csv')"
+                        style="padding: 0.5rem 1rem; font-weight: 600; border-top-left-radius: 0; border-bottom-left-radius: 0;">
+                        <i class="fas fa-file-csv me-2"></i> {{ __('admin.backup_excel') ?? 'Backup Excel' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-xl-3 col-md-6 mb-4 mb-xl-0">
+                <div class="card border-left-primary">
+                    <div class="card-body">
+                        <div class="text-primary font-weight-bold text-uppercase mb-1">{{ __('admin.total_logs') }}</div>
+                        <div class="h3 mb-0">{{ $logs->total() }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4 mb-xl-0">
+                <div class="card border-left-success">
+                    <div class="card-body">
+                        <div class="text-success font-weight-bold text-uppercase mb-1">{{ __('common.page') }}</div>
+                        <div class="h3 mb-0">{{ $logs->currentPage() }} / {{ $logs->lastPage() }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4 mb-xl-0">
+                <div class="card border-left-info">
+                    <div class="card-body">
+                        <div class="text-info font-weight-bold text-uppercase mb-1">{{ __('common.period') }}</div>
+                        <div class="small">{{ request('start_date') ?? __('common.all') }} -
+                            {{ request('end_date') ?? __('common.today') }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4 mb-xl-0">
+                <div class="card border-left-warning">
+                    <div class="card-body">
+                        <div class="text-warning font-weight-bold text-uppercase mb-1">{{ __('common.user') }}</div>
+                        <div class="small">{{ $user?->name }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Audit Logs Table -->
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-2">
+                <h5 class="mb-0">{{ __('admin.activity_logs_list') }}</h5>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-light shadow-sm dropdown-toggle d-flex align-items-center" type="button" id="columnToggleDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" style="border-radius: 8px; font-weight: 600;">
+                        <i class="fas fa-columns me-2"></i> Kolom
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-3" aria-labelledby="columnToggleDropdown" style="border-radius: 12px; min-width: 200px;">
+                        <h6 class="dropdown-header ps-0 mb-2 text-dark fw-bold">Tampilkan Kolom</h6>
+                        <li class="mb-2"><div class="form-check"><input class="form-check-input col-toggle" type="checkbox" value="col-date" id="check-date" checked> <label class="form-check-label small" for="check-date">Tanggal</label></div></li>
+                        <li class="mb-2"><div class="form-check"><input class="form-check-input col-toggle" type="checkbox" value="col-user" id="check-user" checked> <label class="form-check-label small" for="check-user">User</label></div></li>
+                        <li class="mb-2"><div class="form-check"><input class="form-check-input col-toggle" type="checkbox" value="col-action" id="check-action" checked> <label class="form-check-label small" for="check-action">Aksi</label></div></li>
+                        <li class="mb-2"><div class="form-check"><input class="form-check-input col-toggle" type="checkbox" value="col-model" id="check-model" checked> <label class="form-check-label small" for="check-model">Model</label></div></li>
+                        <li class="mb-2"><div class="form-check"><input class="form-check-input col-toggle" type="checkbox" value="col-amount" id="check-amount" checked> <label class="form-check-label small" for="check-amount">Jumlah</label></div></li>
+                        <li class="mb-2"><div class="form-check"><input class="form-check-input col-toggle" type="checkbox" value="col-url" id="check-url" checked> <label class="form-check-label small" for="check-url">URL</label></div></li>
+                        <li class="mb-2"><div class="form-check"><input class="form-check-input col-toggle" type="checkbox" value="col-ip" id="check-ip" checked> <label class="form-check-label small" for="check-ip">IP Address</label></div></li>
+                        <li><div class="form-check"><input class="form-check-input col-toggle" type="checkbox" value="col-device" id="check-device" checked> <label class="form-check-label small" for="check-device">Device</label></div></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 text-nowrap">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="col-date">{{ __('common.date') }}</th>
+                                <th class="col-user">{{ __('common.user') }}</th>
+                                <th class="col-action">{{ __('common.action') }}</th>
+                                <th class="col-model">{{ __('admin.model') }}</th>
+                                <th class="col-amount">{{ __('common.amount') }}</th>
+                                <th class="col-url">URL</th>
+                                <th class="col-ip">{{ __('admin.ip_address') }}</th>
+                                <th class="col-device">Device</th>
+                                <th>{{ __('common.actions') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($logs as $log)
+                                <tr>
+                                    <td class="col-date">
+                                        <small>{{ $log->created_at->format('Y-m-d H:i:s') }}</small>
+                                    </td>
+                                    <td class="col-user">
+                                        <span class="badge bg-info">{{ $log->user?->name ?? __('common.system') }}</span>
+                                        <small class="text-muted ms-1">({{ $log->user?->role->name ?? '' }})</small>
+                                        @if($log->user && $log->user->role && $log->user->role->name === 'cashier')
+                                            <small class="text-muted ms-2">
+                                                <i class="fa-solid fa-id-card me-1 small"></i>{{ $log->user->nis ?? '-' }}
+                                                <i class="fa-solid fa-user ms-2 me-1 small"></i>{{ $log->user->username ?? '-' }}
+                                            </small>
+                                        @endif
+                                    </td>
+                                    <td class="col-action">
+                                        <span class="badge bg-secondary">{{ $log->action }}</span>
+                                    </td>
+                                    <td class="col-model">
+                                        <small class="fw-bold">{{ $log->model_type }}</small>
+                                        @if($log->model_id)
+                                            <code class="ms-1 small">#{{ $log->model_id }}</code>
+                                        @endif
+                                    </td>
+                                    <td class="col-amount">
+                                        @if($log->amount)
+                                            @if(in_array($log->action, ['transaction_created', 'payment_received', 'refund', 'expense_created']))
+                                                <strong>Rp{{ number_format($log->amount, 0, ',', '.') }}</strong>
+                                            @else
+                                                <span class="fw-bold">{{ number_format($log->amount, 0, ',', '.') }}</span>
+                                            @endif
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </td>
+                                    <td class="col-url">
+                                        <small><code>{{ $log->url }}</code></small>
+                                    </td>
+                                    <td class="col-ip">
+                                        <small><code>{{ $log->ip_address }}</code></small>
+                                    </td>
+                                    <td class="col-device">
+                                        <small>
+                                            <i class="fa-solid fa-desktop"></i> {{ $log->device_name ?? 'Unknown' }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-outline-primary" data-bs-toggle="modal"
+                                            data-bs-target="#detailModal" data-id="{{ $log->id }}"
+                                            style="border-radius: 8px; padding: 0.25rem 0.6rem;"
+                                            data-user="{{ $log->user?->name ?? __('common.system') }}"
+                                            data-role="{{ $log->user?->role->name ?? '' }}"
+                                            data-nis="{{ $log->user?->nis ?? '-' }}"
+                                            data-username="{{ $log->user?->username ?? '-' }}"
+                                            data-action="{{ $log->action }}" data-model="{{ $log->model_type }}"
+                                            data-model-id="{{ $log->model_id }}"
+                                            data-amount="{{ $log->amount ? (in_array($log->action, ['transaction_created', 'payment_received', 'refund', 'expense_created']) ? 'Rp' . number_format($log->amount, 0, ',', '.') : number_format($log->amount, 0, ',', '.')) : '-' }}"
+                                            data-method="{{ $log->payment_method ?? '-' }}" 
+                                            data-ip="{{ $log->ip_address }}"
+                                            data-mac="{{ $log->mac_address ?? 'Not Available' }}"
+                                            data-device="{{ $log->device_name ?? 'Unknown Device' }}"
+                                            data-agent="{{ $log->user_agent }}"
+                                            data-url="{{ $log->url }}"
+                                            data-date="{{ $log->created_at->format('Y-m-d H:i:s') }}"
+                                            data-changes="{{ json_encode($log->changes ?? []) }}"
+                                            data-notes="{{ $log->notes ?? '-' }}">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="8" class="text-center py-4 text-muted">
+                                        {{ __('admin.no_audit_logs') }}
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-light d-flex justify-content-end">
+                {{ $logs->links('vendor.pagination.custom-brown') }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Modal -->
+    <div class="modal fade" id="filterModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ __('admin.filter_audit_log') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="GET" action="{{ route('admin.audit.index') }}">
+                    <div class="modal-body">
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label">Search User (NIS / Username / Name)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                    <input type="text" name="search" class="form-control" placeholder="Enter NIS or Username..." value="{{ request('search') }}">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">{{ __('admin.start_date') }}</label>
+                                <input type="date" name="start_date" class="form-control"
+                                    value="{{ request('start_date') }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ __('admin.end_date') }}</label>
+                                <input type="date" name="end_date" class="form-control" value="{{ request('end_date') }}">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">{{ __('common.action') }}</label>
+                                <select name="action" class="form-control">
+                                    <option value="">{{ __('admin.all_actions') }}</option>
+                                    @foreach($actions as $action)
+                                        <option value="{{ $action }}" @selected(request('action') == $action)>
+                                            {{ $action }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ __('common.role') }}</label>
+                                <select name="role_id" class="form-control">
+                                    <option value="">{{ __('admin.all_roles') ?? 'All Roles' }}</option>
+                                    @foreach($roles as $role)
+                                        <option value="{{ $role->id }}" @selected(request('role_id') == $role->id)>
+                                            {{ ucfirst($role->name) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal" style="border-radius: 10px; padding: 0.6rem 1.25rem;">{{ __('common.cancel') }}</button>
+                        <a href="{{ route('admin.audit.index') }}"
+                            class="btn btn-light border" style="border-radius: 10px; padding: 0.6rem 1.25rem;">{{ __('common.reset') }}</a>
+                        <button type="submit" class="btn btn-primary" style="border-radius: 10px; padding: 0.6rem 1.25rem; font-weight: 600;">{{ __('admin.apply_filter') }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="modal fade" id="detailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">{{ __('admin.audit_log_detail') }}</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                   <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small">{{ __('common.date') }}</label>
+                            <p id="detail-date" class="mb-0 fw-bold"></p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small">{{ __('common.user') }}</label>
+                            <p id="detail-user" class="mb-0 fw-bold"></p>
+                            <p id="detail-role" class="mb-0 text-muted small"></p>
+                        </div>
+                    </div>
+                    <div class="row mb-3" id="cashier-info-row" style="display: none;">
+                        <div class="col-md-6">
+                            <label class="text-muted small"><i class="fa-solid fa-id-card me-1"></i>NIS</label>
+                            <p id="detail-nis" class="mb-0 fw-bold"></p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small"><i class="fa-solid fa-user me-1"></i>Username</label>
+                            <p id="detail-username" class="mb-0 fw-bold"></p>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small">{{ __('common.action') }}</label>
+                            <p id="detail-action" class="mb-0 fw-bold"></p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small">{{ __('admin.model_type') }}</label>
+                            <p id="detail-model" class="mb-0 fw-bold"></p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small">{{ __('admin.model_id') }}</label>
+                            <p id="detail-model-id" class="mb-0 fw-bold"></p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small">{{ __('common.amount') }}</label>
+                            <p id="detail-amount" class="mb-0 fw-bold"></p>
+                        </div>
+                    </div>
+                    <hr>
+                    <h6 class="text-muted mb-3"><i class="fa-solid fa-network-wired me-2"></i>Device Information</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small"><i class="fa-solid fa-globe me-1"></i>IP Address</label>
+                            <p id="detail-ip" class="mb-0 fw-bold"><code></code></p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small"><i class="fa-solid fa-ethernet me-1"></i>MAC Address</label>
+                            <p id="detail-mac" class="mb-0 fw-bold"><code></code></p>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small"><i class="fa-solid fa-desktop me-1"></i>Device Name</label>
+                        <p id="detail-device" class="mb-0 fw-bold"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small"><i class="fa-solid fa-browser me-1"></i>User Agent</label>
+                        <p id="detail-agent" class="mb-0 fw-bold" style="font-size: 0.75rem; word-break: break-all;"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small"><i class="fa-solid fa-link me-1"></i>Full URL</label>
+                        <p id="detail-url" class="mb-0 fw-bold" style="font-size: 0.75rem; word-break: break-all;"><code></code></p>
+                    </div>
+                    <hr>
+                    <div class="mb-3">
+                        <label class="text-muted small"><i class="fa-solid fa-sticky-note me-1"></i>Notes</label>
+                        <p id="detail-notes" class="mb-0 fw-bold"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small"><i class="fa-solid fa-code me-1"></i>Data Changes</label>
+                        <div id="detail-changes-container">
+                            <pre id="detail-changes-raw" class="bg-light p-2 d-none"
+                                style="border-radius: 6px; max-height: 300px; overflow-y: auto;"></pre>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered mt-2" id="detail-changes-table">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Field</th>
+                                            <th>Before</th>
+                                            <th>After</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary"
+                        data-bs-dismiss="modal">{{ __('common.close') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clear Logs Modal -->
+    <div class="modal fade" id="clearLogsModal" tabindex="-1" aria-labelledby="clearLogsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 15px; border: none; overflow: hidden;">
+                <div class="modal-header bg-danger text-white border-bottom-0">
+                    <h5 class="modal-title fw-bold" id="clearLogsModalLabel">
+                        <i class="fas fa-exclamation-triangle me-2"></i>{{ __('admin.clear_logs') }}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-trash-alt fa-3x text-danger opacity-25"></i>
+                    </div>
+                    <p class="mb-2" id="clearLogsText">{{ __('admin.clear_logs_desc') }}<br><strong>{{ __('admin.clear_confirm') }}</strong></p>
+                    
+                    <form action="{{ route('admin.audit.clear') }}" method="POST" id="clearLogsForm">
+                        @csrf
+                        <div class="mb-4 text-start">
+                            <label class="form-label fw-bold small text-muted">{{ __('admin.confirm_password') ?? 'Konfirmasi Password' }}</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                            </div>
+                            <div class="form-text text-danger small" id="passwordError" style="display: none;">
+                                {{ __('admin.password_incorrect') ?? 'Password yang anda masukkan salah' }}
+                            </div>
+                        </div>
+                        {{-- Preserved filters for 'filtered' deletion --}}
+                        <input type="hidden" name="start_date" value="{{ request('start_date') }}">
+                        <input type="hidden" name="end_date" value="{{ request('end_date') }}">
+                        <input type="hidden" name="action" value="{{ request('action') }}">
+                        <input type="hidden" name="role_id" value="{{ request('role_id') }}">
+                        <input type="hidden" name="search" value="{{ request('search') }}">
+                        <input type="hidden" name="clear_type" id="clear_type" value="all">
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger py-2 fw-bold" id="confirmClearBtn">
+                                <i class="fas fa-check me-2"></i>{{ __('admin.confirm_and_proceed') ?? 'Konfirmasi & Lanjutkan' }}
+                            </button>
+                            
+                            @if(request()->anyFilled(['start_date', 'end_date', 'action', 'role_id', 'search']))
+                                <button type="button" class="btn btn-outline-danger py-2 fw-bold" onclick="confirmClear('filtered')">
+                                    <i class="fas fa-filter me-2"></i>{{ __('admin.clear_logs_filtered') }}
+                                </button>
+                            @endif
+                            <button type="button" class="btn btn-light py-2" data-bs-dismiss="modal">{{ __('admin.cancel') }}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Handle detail modal button click
+        document.getElementById('detailModal').addEventListener('show.bs.modal', function (e) {
+            const button = e.relatedTarget;
+            const modal = this;
+
+            // Get data from button attributes
+            const date = button.getAttribute('data-date');
+            const user = button.getAttribute('data-user');
+            const role = button.getAttribute('data-role');
+            const nis = button.getAttribute('data-nis');
+            const username = button.getAttribute('data-username');
+            const action = button.getAttribute('data-action');
+            const model = button.getAttribute('data-model');
+            const modelId = button.getAttribute('data-model-id');
+            const amount = button.getAttribute('data-amount');
+            const method = button.getAttribute('data-method');
+            const ip = button.getAttribute('data-ip');
+            const mac = button.getAttribute('data-mac');
+            const device = button.getAttribute('data-device');
+            const agent = button.getAttribute('data-agent');
+            const url = button.getAttribute('data-url');
+            const notes = button.getAttribute('data-notes');
+            const changes = JSON.parse(button.getAttribute('data-changes') || '{}');
+
+            // Populate modal
+            modal.querySelector('#detail-date').textContent = date;
+            modal.querySelector('#detail-user').textContent = user;
+            modal.querySelector('#detail-role').textContent = role;
+            
+            // Show NIS and username only for cashiers
+            const cashierInfoRow = modal.querySelector('#cashier-info-row');
+            if (role && role.toLowerCase() === 'cashier') {
+                cashierInfoRow.style.display = 'flex';
+                modal.querySelector('#detail-nis').textContent = nis;
+                modal.querySelector('#detail-username').textContent = username;
+            } else {
+                cashierInfoRow.style.display = 'none';
+            }
+            
+            modal.querySelector('#detail-action').innerHTML = `<span class="badge bg-secondary">${action}</span>`;
+            modal.querySelector('#detail-model').textContent = model;
+            modal.querySelector('#detail-model-id').textContent = modelId || '-';
+            modal.querySelector('#detail-amount').textContent = amount;
+            modal.querySelector('#detail-ip').innerHTML = `<code>${ip}</code>`;
+            modal.querySelector('#detail-mac').innerHTML = `<code>${mac}</code>`;
+            modal.querySelector('#detail-device').textContent = device;
+            modal.querySelector('#detail-agent').textContent = agent;
+            modal.querySelector('#detail-url').innerHTML = `<code>${url}</code>`;
+            modal.querySelector('#detail-notes').textContent = notes;
+
+            // Handle Changes Table
+            const changesRaw = modal.querySelector('#detail-changes-raw');
+            const changesTableBody = modal.querySelector('#detail-changes-table tbody');
+            changesTableBody.innerHTML = '';
+            
+            if (changes && (changes.before || changes.after)) {
+                changesRaw.classList.add('d-none');
+                modal.querySelector('#detail-changes-table').classList.remove('d-none');
+                
+                const before = changes.before || {};
+                const after = changes.after || {};
+                const allKeys = [...new Set([...Object.keys(before), ...Object.keys(after)])];
+                
+                if (allKeys.length > 0) {
+                    allKeys.forEach(key => {
+                        const tr = document.createElement('tr');
+                        
+                        const tdKey = document.createElement('td');
+                        tdKey.className = 'fw-bold small';
+                        tdKey.textContent = key;
+                        
+                        const tdBefore = document.createElement('td');
+                        tdBefore.className = 'text-danger small';
+                        tdBefore.textContent = (typeof before[key] === 'object' ? JSON.stringify(before[key]) : before[key]) ?? '-';
+                        
+                        const tdAfter = document.createElement('td');
+                        tdAfter.className = 'text-success small';
+                        tdAfter.textContent = (typeof after[key] === 'object' ? JSON.stringify(after[key]) : after[key]) ?? '-';
+                        
+                        tr.appendChild(tdKey);
+                        tr.appendChild(tdBefore);
+                        tr.appendChild(tdAfter);
+                        changesTableBody.appendChild(tr);
+                    });
+                } else {
+                    changesTableBody.innerHTML = '<tr><td colspan="3" class="text-center text-muted italic">No specific field changes recorded</td></tr>';
+                }
+            } else {
+                changesRaw.textContent = JSON.stringify(changes, null, 2);
+                changesRaw.classList.remove('d-none');
+                modal.querySelector('#detail-changes-table').classList.add('d-none');
+            }
+        });
+
+        function exportReport(format) {
+            const params = new URLSearchParams(window.location.search);
+            params.set('format', format);
+
+            window.location.href = "{{ route($routePrefix . 'audit.export') }}?" + params.toString();
+        }
+
+        function confirmClear(type) {
+            document.getElementById('clear_type').value = type;
+            const text = document.getElementById('clearLogsText');
+            const btn = document.getElementById('confirmClearBtn');
+            
+            if (type === 'backup_clear') {
+                text.innerHTML = "<strong>Backup dan Hapus Semua Log</strong><br>Sistem akan mengunduh laporan excel terlebih dahulu sebelum menghapus seluruh data secara permanen.";
+                btn.className = "btn btn-warning py-2 fw-bold text-white";
+                btn.innerHTML = '<i class="fas fa-file-export me-2"></i>Backup & Hapus';
+            } else {
+                text.innerHTML = "{{ __('admin.clear_logs_desc') }}<br><strong>{{ __('admin.clear_confirm') }}</strong>";
+                btn.className = "btn btn-danger py-2 fw-bold";
+                btn.innerHTML = '<i class="fas fa-check me-2"></i>Konfirmasi & Lanjutkan';
+            }
+        }
+
+        function setClearType(type) {
+            confirmClear(type);
+        }
+
+        // Add auto-refresh for backup_clear
+        document.getElementById('clearLogsForm').addEventListener('submit', function(e) {
+            const clearType = document.getElementById('clear_type').value;
+            if (clearType === 'backup_clear') {
+                // We use a timeout to let the browser initiate the download before reloading
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            }
+        });
+
+        // Column visibility logic
+        document.querySelectorAll('.col-toggle').forEach(checkbox => {
+            // Load initial state
+            const colName = checkbox.value;
+            const isHidden = localStorage.getItem('hide-' + colName) === 'true';
+            
+            if (isHidden) {
+                checkbox.checked = false;
+                toggleColumn(colName, false);
+            }
+
+            checkbox.addEventListener('change', function() {
+                toggleColumn(this.value, this.checked);
+                localStorage.setItem('hide-' + this.value, !this.checked);
+            });
+        });
+
+        function toggleColumn(colName, show) {
+            document.querySelectorAll('.' + colName).forEach(el => {
+                if (show) {
+                    el.classList.remove('d-none');
+                } else {
+                    el.classList.add('d-none');
+                }
+            });
+        }
+    </script>
+
+    <style>
+        .no-print {
+            display: none !important;
+        }
+
+        .btn-outline-brown {
+            color: var(--color-primary-dark);
+            border-color: var(--color-primary-dark);
+        }
+
+        .btn-outline-brown:hover {
+            background-color: var(--color-primary-dark);
+            color: white;
+        }
+
+        .btn-brown {
+            background-color: var(--color-primary-dark);
+            color: white;
+        }
+
+        .btn-brown:hover {
+            background-color: var(--brown-900);
+            color: white;
+        }
+
+        @media print {
+            .no-print-sidebar {
+                display: none !important;
+            }
+
+            .container-fluid {
+                padding: 0 !important;
+            }
+
+            .card {
+                border: 1px solid var(--gray-200) !important;
+                box-shadow: none !important;
+            }
+            
+            .btn-outline-brown, .btn-brown, .modal, .pagination, footer, .navbar, .sidebar {
+                display: none !important;
+            }
+        }
+    </style>
+@endsection

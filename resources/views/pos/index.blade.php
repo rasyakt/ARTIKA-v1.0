@@ -1,0 +1,4559 @@
+@php /** @var \App\Models\User $user */ $user = Auth::user(); @endphp
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {{-- Apply theme ASAP to prevent flash --}}
+    <script>
+        (function () {
+            const saved = localStorage.getItem('artika-theme') || 'system';
+            if (saved === 'dark' || (saved === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-bs-theme', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-bs-theme', 'light');
+            }
+        })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="theme-color" content="#6F5849">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ARTIKA POS">
+    <title>{{ __('pos.title') }}</title>
+    <link rel="icon" type="image/png" href="{{ asset('img/logo2.png') }}">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/img/icons/icon-192x192.png">
+    @vite(['resources/css/app.scss', 'resources/js/app.js'])
+    {!! \App\Helpers\ThemeHelper::getCssVariables(\App\Models\Setting::get('site_color_theme', 'brown')) !!}
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* SweetAlert2 Custom Theme ARTIKA */
+        .artika-swal-popup {
+            border-radius: 16px !important;
+            padding: 1.5rem !important;
+            border: 1px solid var(--brown-100) !important;
+            font-family: 'Segoe UI', system-ui, sans-serif !important;
+        }
+
+        .artika-swal-title {
+            color: var(--brown-900) !important;
+            font-weight: 700 !important;
+            font-size: 1.25rem !important;
+        }
+
+        .artika-swal-confirm-btn {
+            background: var(--color-primary-dark) !important;
+            border-radius: 10px !important;
+            padding: 0.6rem 1.5rem !important;
+            font-weight: 600 !important;
+            color: white !important;
+            margin: 0.5rem !important;
+        }
+
+        .artika-swal-cancel-btn {
+            background: var(--brown-50) !important;
+            color: var(--color-primary-dark) !important;
+            border: 1px solid var(--brown-100) !important;
+            border-radius: 10px !important;
+            padding: 0.6rem 1.5rem !important;
+            font-weight: 600 !important;
+            margin: 0.5rem !important;
+        }
+
+        .artika-swal-toast {
+            border-radius: 12px !important;
+            background: var(--color-white) !important;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        :root {
+            --primary: var(--color-primary);
+            --primary-dark: var(--color-primary-dark);
+            --primary-light: var(--color-primary-light);
+            --success: var(--color-success);
+            --danger: var(--color-danger);
+            --brown-50: var(--brown-50);
+            --gray-100: var(--gray-100);
+            --gray-200: var(--gray-200);
+            --gray-300: var(--gray-300);
+            --gray-700: var(--gray-700);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Touch-friendly sizing */
+        input,
+        button,
+        select,
+        textarea {
+            font-size: 16px;
+            /* Prevents auto-zoom on iOS */
+        }
+
+        /* Smooth scrolling on mobile */
+        .products-grid-container,
+        .cart-items {
+            -webkit-overflow-scrolling: touch;
+        }
+
+        html {
+            zoom: 90%;
+            background: var(--color-bg);
+        }
+
+        html,
+        body {
+            height: 100% !important;
+            margin: 0;
+            padding: 0;
+            overflow: hidden !important;
+        }
+
+        /* Prevent SweetAlert2 from breaking 100% height layout */
+        html.swal2-shown,
+        body.swal2-shown {
+            height: 100% !important;
+            overflow: hidden !important;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--color-bg);
+            color: var(--color-text, #333);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Theme Toggle Button (POS) */
+        .pos-theme-toggle {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 0.35rem 0.65rem;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.85rem;
+        }
+
+        .pos-theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .pos-theme-menu {
+            min-width: 140px;
+            padding: 0.4rem;
+            border-radius: 10px;
+            border: 1px solid var(--gray-200);
+            background: var(--card-bg, #fff);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .pos-theme-opt {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.45rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            color: var(--color-text, #333);
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            transition: all 0.2s;
+        }
+
+        .pos-theme-opt:hover {
+            background: var(--gray-100, #f5f5f5);
+        }
+
+        .pos-theme-opt.active {
+            background: var(--primary-dark, #f0e7e0);
+            color: var(--color-primary, #85695a);
+            font-weight: 600;
+        }
+
+        .pos-theme-opt i {
+            width: 1rem;
+            text-align: center;
+        }
+
+        .pos-theme-check {
+            margin-left: auto;
+            font-size: 0.7rem;
+            color: var(--color-primary);
+        }
+
+        /* === DARK MODE OVERRIDES (POS) === */
+        [data-bs-theme="dark"] .products-section,
+        [data-bs-theme="dark"] .cart-section {
+            background: var(--card-bg, #2a2a2a);
+        }
+
+        [data-bs-theme="dark"] .product-card {
+            background: var(--gray-100);
+            border-color: var(--gray-200);
+        }
+
+        [data-bs-theme="dark"] .category-filter {
+            background: linear-gradient(to right, var(--card-bg) 0%, var(--card-bg) 95%, rgba(42, 42, 42, 0.8) 100%);
+        }
+
+        [data-bs-theme="dark"] .category-btn {
+            background: var(--gray-100);
+            border-color: var(--gray-300);
+            color: var(--color-text);
+        }
+
+        [data-bs-theme="dark"] .category-btn:hover {
+            background: var(--gray-200);
+        }
+
+        [data-bs-theme="dark"] .search-input,
+        [data-bs-theme="dark"] .barcode-input {
+            color: var(--color-text);
+        }
+
+        [data-bs-theme="dark"] .search-input-group {
+            background: var(--gray-100);
+            border-color: var(--gray-300);
+        }
+
+        [data-bs-theme="dark"] .quantity-control {
+            background: var(--gray-200);
+        }
+
+        [data-bs-theme="dark"] .totals-section {
+            background: var(--gray-100);
+        }
+
+        [data-bs-theme="dark"] .payment-method-btn {
+            background: var(--gray-100);
+            border-color: var(--gray-300);
+            color: var(--color-text);
+        }
+
+        [data-bs-theme="dark"] .modal-content {
+            background: var(--card-bg);
+            color: var(--color-text);
+        }
+
+        [data-bs-theme="dark"] .modal-header,
+        [data-bs-theme="dark"] .modal-footer {
+            border-color: var(--gray-200);
+            background: var(--card-bg);
+        }
+
+        [data-bs-theme="dark"] .form-control,
+        [data-bs-theme="dark"] .form-select {
+            background-color: var(--gray-100);
+            border-color: var(--gray-200);
+            color: var(--color-text);
+        }
+
+        [data-bs-theme="dark"] .dropdown-menu {
+            background-color: var(--card-bg);
+            border-color: var(--gray-200);
+        }
+
+        [data-bs-theme="dark"] .dropdown-item {
+            color: var(--color-text);
+        }
+
+        [data-bs-theme="dark"] .dropdown-item:hover {
+            background-color: var(--gray-100);
+        }
+
+        [data-bs-theme="dark"] .bg-light {
+            background-color: var(--gray-100) !important;
+        }
+
+        [data-bs-theme="dark"] .text-dark {
+            color: var(--color-text) !important;
+        }
+
+        [data-bs-theme="dark"] .artika-swal-popup {
+            background: var(--card-bg) !important;
+        }
+
+        [data-bs-theme="dark"] .artika-swal-title {
+            color: var(--color-text) !important;
+        }
+
+        [data-bs-theme="dark"] .swal2-html-container {
+            color: var(--color-text) !important;
+        }
+
+        [data-bs-theme="dark"] .keypad-btn {
+            background: var(--gray-100);
+            border-color: var(--gray-200);
+            color: var(--color-text);
+        }
+
+        [data-bs-theme="dark"] .keypad-btn:hover {
+            background: var(--gray-200);
+            border-color: var(--primary);
+        }
+
+        [data-bs-theme="dark"] #mobileCartView,
+        [data-bs-theme="dark"] .search-section,
+        [data-bs-theme="dark"] .products-grid,
+        [data-bs-theme="dark"] .bottom-nav {
+            background: var(--card-bg) !important;
+        }
+
+        [data-bs-theme="dark"] .category-filter {
+            background: rgba(42, 42, 42, 0.85);
+        }
+
+        [data-bs-theme="dark"] .cart-footer {
+            background: rgba(42, 42, 42, 0.9);
+        }
+
+        /* Fixed Overlay Alignment Fix for Zoom & Mobile Stacking */
+        .modal-backdrop {
+            z-index: 3000 !important;
+        }
+
+        .modal {
+            z-index: 3001 !important;
+        }
+
+        .swal2-container {
+            z-index: 7000 !important;
+        }
+
+        .modal-backdrop,
+        .swal2-container,
+        .modal {
+            width: auto !important;
+            height: auto !important;
+            left: 0 !important;
+            right: 0 !important;
+            top: 0 !important;
+            bottom: 0 !important;
+        }
+
+        .pos-container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden !important;
+        }
+
+        .pos-main {
+            flex: 1;
+            display: flex;
+            gap: 0;
+            overflow: hidden !important;
+            height: 100%;
+        }
+
+        /* NAVBAR */
+        .pos-navbar {
+            background: var(--primary);
+            /* background: var(--primary-dark); */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            height: 55px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(133, 105, 90, 0.15);
+            z-index: 100;
+        }
+
+        .navbar-brand {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .profile-trigger {
+            transition: all 0.25s;
+            border-radius: 12px;
+            padding: 0.5rem 1rem;
+            background: none;
+            border: none;
+        }
+
+        .profile-trigger:hover {
+            background: var(--color-primary) !important;
+        }
+
+        .profile-avatar {
+            width: 40px;
+            height: 40px;
+            background: var(--color-primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.4rem;
+            border: 2px solid var(--color-primary-light);
+            transition: all 0.2s;
+        }
+
+        .dropdown-menu {
+            border: 1px solid rgba(133, 105, 90, 0.1);
+            animation: slideIn 0.2s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-item:hover {
+            background-color: var(--brown-50);
+            color: var(--primary-dark);
+        }
+
+        .products-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--card-bg);
+            border-right: 1px solid var(--gray-300);
+            overflow: hidden !important;
+        }
+
+        /* SEARCH */
+        .search-section {
+            padding: 1rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .search-input-group {
+            display: flex;
+            align-items: center;
+            background: var(--gray-100);
+            border: 1px solid var(--primary-light);
+            border-radius: 8px;
+            padding: 0 0.75rem;
+        }
+
+        .search-icon {
+            color: var(--gray-700);
+            margin-right: 0.5rem;
+        }
+
+        .search-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 0.6rem;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .dual-search-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .barcode-input-group {
+            display: flex;
+            align-items: center;
+            background: var(--color-warning-light);
+            border: 2px solid var(--primary-light);
+            border-radius: 8px;
+            padding: 0 0.75rem;
+            transition: all 0.2s;
+        }
+
+        .barcode-input-group:focus-within {
+            box-shadow: 0 0 0 3px rgba(161, 128, 114, 0.2);
+            border-color: var(--primary);
+        }
+
+        .barcode-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 0.6rem;
+            font-size: 0.9rem;
+            outline: none;
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+
+        /* Hide barcode input on smaller tablets and touch devices to prevent keyboard popup */
+        @media (max-width: 1024px),
+        (pointer: coarse) {
+            .barcode-input-group {
+                display: none !important;
+            }
+        }
+
+        /* Hide camera button on non-touch desktop screens (>= 1025px) */
+        @media (min-width: 1025px) and (pointer: fine) {
+            .scanner-btn-group {
+                display: none !important;
+            }
+        }
+
+        .scanner-btn-group button {
+            padding: 0.6rem;
+            border-radius: 8px;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(133, 105, 90, 0.1);
+            transition: all 0.2s;
+            height: 100%;
+            /* Match height of search input */
+        }
+
+        .scanner-btn-group button:active {
+            transform: scale(0.98);
+        }
+
+        /* CATEGORIES */
+        .category-filter {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            overflow-x: auto;
+            border-bottom: 2px solid var(--gray-200);
+            -webkit-overflow-scrolling: touch;
+            position: sticky;
+            top: 0;
+            background: linear-gradient(to right, var(--card-bg) 0%, var(--card-bg) 95%, rgba(253, 248, 246, 0.8) 100%);
+            z-index: 50;
+            box-shadow: 0 2px 6px rgba(133, 105, 90, 0.08);
+            align-items: center;
+        }
+
+        .category-filter::-webkit-scrollbar {
+            height: 5px;
+        }
+
+        .category-filter::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .category-filter::-webkit-scrollbar-thumb {
+            background: var(--primary-light);
+            border-radius: 2px;
+        }
+
+        .category-filter::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+
+        .category-btn {
+            padding: 0.65rem 1.3rem;
+            border: 2px solid var(--gray-300);
+            background: var(--white);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            color: var(--gray-700);
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-user-select: none;
+            user-select: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .category-btn:hover {
+            border-color: var(--primary-light);
+            color: var(--primary);
+            box-shadow: 0 4px 12px rgba(133, 105, 90, 0.15);
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .category-btn.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 6px 16px rgba(133, 105, 90, 0.25);
+            font-weight: 700;
+            transform: translateY(-1px);
+        }
+
+        .category-btn.active:hover {
+            box-shadow: 0 8px 20px rgba(133, 105, 90, 0.3);
+        }
+
+        .category-btn:active:not(.active) {
+            transform: scale(0.95);
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.12);
+        }
+
+        .category-btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.5), transparent);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        .category-btn:active::after {
+            animation: ripple 0.6s ease-out;
+        }
+
+        @keyframes ripple {
+            0% {
+                width: 0;
+                height: 0;
+            }
+
+            100% {
+                width: 300px;
+                height: 300px;
+            }
+        }
+
+        /* PRODUCTS */
+        .products-grid-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .product-card {
+            background: var(--white);
+            border: 1px solid var(--gray-100);
+            border-radius: 12px;
+            padding: 0;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            -webkit-user-select: none;
+            user-select: none;
+            position: relative;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+            height: 100%;
+        }
+
+        .product-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+            transform: translateY(-4px);
+        }
+
+        .product-card:active {
+            transform: scale(0.98);
+        }
+
+        .product-image-wrapper {
+            width: 100%;
+            aspect-ratio: 1/1;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            position: relative;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .product-image-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover .product-image-wrapper img {
+            transform: scale(1.05);
+        }
+
+        .product-card-body {
+            padding: 1rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--gray-800);
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            height: 2.8em;
+        }
+
+        .product-price {
+            font-weight: 500;
+            color: var(--gray-500);
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .product-price .discounted-price {
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .product-stock {
+            font-size: 0.85rem;
+            color: #20c997;
+            /* Teal/Green for stock as per image */
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+        .product-stock.out-of-stock {
+            color: var(--danger);
+        }
+
+        .btn-add-product {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            margin-top: auto;
+        }
+
+        .product-card:hover .btn-add-product {
+            background: var(--primary-dark);
+        }
+
+        .promo-badge {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: var(--danger);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            z-index: 2;
+        }
+
+        .expiry-badge {
+            position: absolute;
+            top: 0.75rem;
+            left: 0.75rem;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            z-index: 2;
+        }
+
+        /* CART */
+        .cart-section {
+            width: 340px;
+            display: flex;
+            flex-direction: column;
+            background: var(--card-bg);
+            border-left: 1px solid var(--gray-300);
+            overflow: hidden;
+        }
+
+        .cart-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--gray-200);
+            background: var(--primary-dark);
+            color: white;
+        }
+
+        .cart-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .summary-stats {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .stat-item {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 0.4rem 0.6rem;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            opacity: 0.9;
+        }
+
+        .stat-value {
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        /* CART ITEMS */
+        .cart-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .cart-items::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .cart-items::-webkit-scrollbar-thumb {
+            background: var(--primary-light);
+            border-radius: 3px;
+        }
+
+        .cart-item {
+            background: var(--brown-50);
+            padding: 0.6rem;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            border-left: 3px solid var(--primary);
+        }
+
+        .cart-item-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.3rem;
+        }
+
+        .cart-item-name {
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: var(--primary-dark);
+        }
+
+        .cart-item-price {
+            font-weight: 700;
+            color: var(--color-accent-warm);
+            font-size: 0.8rem;
+        }
+
+        .cart-item-details {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.75rem;
+        }
+
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 0.2rem;
+            background: var(--card-bg);
+            border-radius: 4px;
+            padding: 0.1rem;
+        }
+
+        .qty-btn {
+            background: none;
+            border: none;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--primary);
+            transition: all 0.2s;
+            font-size: 0.85rem;
+            min-height: 32px;
+            min-width: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+        }
+
+        .qty-btn:active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .qty-btn:hover {
+            background: var(--gray-200);
+            border-radius: 3px;
+        }
+
+        .qty-display {
+            width: 25px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        .cart-item-remove {
+            background: var(--danger);
+            color: white;
+            border: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cart-item-remove:hover {
+            background: var(--color-danger);
+        }
+
+        .cart-empty {
+            text-align: center;
+            color: var(--gray-700);
+            padding: 4rem 1rem;
+            /* Increased padding for better visual stability */
+            font-size: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            opacity: 0.6;
+        }
+
+        /* FOOTER */
+        .cart-footer {
+            padding: 1rem;
+            background: var(--brown-50);
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .totals-section {
+            margin-bottom: 1rem;
+            background: var(--card-bg);
+            padding: 0.75rem;
+            border-radius: 6px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1rem;
+            padding: 0.4rem 0;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .total-row:last-child {
+            border-bottom: none;
+        }
+
+        .total-row.final {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--primary);
+            padding-top: 0.5rem;
+        }
+
+        /* PAYMENT */
+        .payment-section {
+            margin-bottom: 1rem;
+        }
+
+        .payment-label {
+            font-weight: 600;
+            color: var(--gray-700);
+            font-size: 0.8rem;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.4rem;
+        }
+
+        .payment-method-btn.full-width {
+            grid-column: span 2;
+        }
+
+        .payment-method-btn {
+            padding: 0.75rem;
+            border: 1px solid var(--gray-300);
+            background: var(--white);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .payment-method-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .payment-method-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* BUTTONS */
+        .checkout-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-checkout {
+            flex: 1;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            color: white;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .btn-checkout:active:not(:disabled) {
+            transform: scale(0.96);
+        }
+
+        .btn-checkout:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-cancel {
+            background: var(--gray-300);
+            color: var(--gray-700);
+            border-radius: 10px;
+        }
+
+        .btn-cancel:hover:not(:disabled) {
+            background: var(--gray-200);
+            transform: translateY(-2px);
+        }
+
+        .btn-finish {
+            background: linear-gradient(135deg, var(--success) 0%, var(--color-success) 100%);
+        }
+
+        .btn-finish:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        /* MODAL */
+        .modal-backdrop {
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            border-radius: 10px;
+            border: none;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border-radius: 10px 10px 0 0;
+            border: none;
+        }
+
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        .modal-title {
+            font-weight: 700;
+        }
+
+        /* KEYPAD */
+        .numeric-keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .keypad-btn {
+            padding: 1rem;
+            border: 1px solid var(--gray-200);
+            background: white;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 1.15rem;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .keypad-btn:hover {
+            background: var(--gray-100);
+            border-color: var(--primary);
+        }
+
+        .keypad-btn.delete {
+            background: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+
+        .keypad-btn.delete:hover {
+            background: var(--color-danger);
+        }
+
+        /* SCANNER REFINED (Unified Overlay) */
+        .scanner-section {
+            display: none;
+            position: fixed;
+            inset: 0;
+            /* Use inset for true full-screen */
+            width: 100%;
+            height: 100%;
+            /* Dynamic viewport height for mobile */
+            background: rgba(0, 0, 0, 0.85);
+            /* Darker for better contrast */
+            backdrop-filter: blur(8px);
+            /* Stronger blur */
+            z-index: 5000;
+            /* Extremely high to stay on top of everything */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            will-change: transform, opacity;
+        }
+
+        .scanner-section.active {
+            display: flex;
+            animation: fadeInScanner 0.3s ease-out;
+        }
+
+        @keyframes fadeInScanner {
+            from {
+                opacity: 0;
+                transform: scale(1.02);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Loading State (Reuse from standalone scanner) */
+        .scanner-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            text-align: center;
+            z-index: 5005;
+            display: none;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin-scanner 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin-scanner {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .scanner-header {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            color: white;
+            z-index: 5001;
+        }
+
+        .scanner-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .scanner-title i {
+            color: var(--color-success);
+            filter: drop-shadow(0 0 5px rgba(16, 185, 129, 0.5));
+        }
+
+        #reader {
+            width: 100% !important;
+            max-width: 500px !important;
+            aspect-ratio: 1/1;
+            border: 4px solid rgba(255, 255, 255, 0.2) !important;
+            border-radius: 24px !important;
+            /* Slightly more rounded */
+            overflow: hidden !important;
+            background: #000 !important;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            position: relative;
+            z-index: 5001;
+        }
+
+        @media (max-width: 768px) {
+            .scanner-section {
+                padding: 0;
+            }
+
+            #reader {
+                position: absolute;
+                inset: 0;
+                width: 100vw !important;
+                height: 100dvh !important;
+                max-width: none !important;
+                border: none !important;
+                border-radius: 0 !important;
+                aspect-ratio: none;
+                z-index: 5000;
+            }
+
+            #reader video {
+                object-fit: cover !important;
+                width: 100% !important;
+                height: 100% !important;
+            }
+
+            .scanner-header {
+                max-width: none;
+                padding: 1.5rem 2rem;
+                background: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent);
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 5002;
+            }
+
+            .scanner-footer {
+                max-width: none;
+                padding: 2.5rem 2rem;
+                background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                z-index: 5002;
+                margin-top: 0;
+            }
+        }
+
+        .scanner-footer {
+            margin-top: 2rem;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .btn-toggle-scanner {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 14px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 700;
+            transition: all 0.25s;
+            backdrop-filter: blur(5px);
+        }
+
+        .btn-toggle-scanner:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-toggle-scanner:active {
+            transform: scale(0.98);
+        }
+
+        .btn-toggle-scanner:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(133, 105, 90, 0.3);
+        }
+
+        /* #reader {
+            width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--gray-200);
+        } */
+
+        @media (max-width: 576px) {
+            .cart-section {
+                width: 100%;
+            }
+
+            .products-grid {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+                padding: 0.5rem;
+            }
+
+            .product-card {
+                flex-direction: row;
+                padding: 0.75rem 1rem;
+                min-height: auto;
+                border-radius: 10px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            }
+
+            .product-card-body {
+                flex-direction: row;
+                width: 100%;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0;
+                gap: 0.5rem;
+            }
+
+            .product-name {
+                margin-bottom: 0;
+                height: auto;
+                -webkit-line-clamp: 1;
+                font-size: 0.85rem;
+                flex: 2;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .product-price {
+                margin-bottom: 0;
+                font-size: 0.8rem;
+                flex: 1.5;
+                text-align: right;
+                display: flex;
+                flex-direction: column;
+                line-height: 1.2;
+            }
+
+            .product-price .discounted-price {
+                font-size: 0.85rem;
+            }
+
+            .product-stock {
+                margin-bottom: 0;
+                font-size: 0.8rem;
+                flex: 1;
+                text-align: right;
+                min-width: 60px;
+            }
+
+            .btn-add-product,
+            .product-image-wrapper,
+            .expiry-badge,
+            .promo-badge {
+                display: none !important;
+            }
+
+            .product-card:hover {
+                transform: none;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            }
+        }
+
+        /* TABLET - MEDIUM SCREENS (Preserve Desktop Layout) */
+        @media (max-width: 1023px) and (min-width: 577px) {
+            .cart-section {
+                width: 320px;
+            }
+
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 1.25rem;
+            }
+
+            .product-image-wrapper {
+                display: none !important;
+            }
+        }
+
+        /* MOBILE - SMALL SCREENS */
+        @media (max-width: 576px) {
+            .dual-search-container {
+                grid-template-columns: 1fr;
+                /* Stack search and camera button */
+                gap: 0.75rem;
+            }
+
+            /* body {
+                overflow-y: auto !important;
+            }
+
+            html,
+            body {
+                height: 100%;
+            } */
+
+            /* .pos-container {
+                height: 100%;
+                /* Ensure full height on mobile */
+            /* display: flex;
+                flex-direction: column;
+                overflow: hidden; */
+            /* Prevent body scroll */
+            /* } */
+
+            .pos-navbar {
+                padding: 0 1rem;
+                height: 52px;
+                flex-shrink: 0;
+                background: var(--primary);
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                z-index: 1000;
+                position: relative;
+            }
+
+            .navbar-brand {
+                font-size: 1rem;
+                font-weight: 700;
+            }
+
+            .navbar-right {
+                gap: 0.35rem;
+            }
+
+            .profile-trigger {
+                transition: transform 0.2s ease;
+            }
+
+            .profile-trigger {
+                padding: 0.35rem 0.5rem;
+                background: transparent !important;
+                border: none !important;
+            }
+
+            .profile-avatar {
+                width: 38px;
+                height: 38px;
+                background: var(--color-primary-light);
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 1.3rem;
+                border: none;
+            }
+
+            .dropdown-item {
+                transition: all 0.2s ease;
+            }
+
+            .dropdown-item:active {
+                background-color: var(--brown-50);
+                color: var(--primary-dark);
+            }
+
+            .products-section {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                border: none;
+            }
+
+            /* View toggling */
+            #mobileCartView {
+                display: none;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: white;
+                z-index: 150;
+                flex-direction: column;
+            }
+
+            #mobileCartView.active {
+                display: flex;
+            }
+
+            .cart-section {
+                width: 100%;
+                height: 100%;
+                border: none;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .search-section {
+                padding: 0.85rem 1rem;
+                background: white;
+                border-bottom: 1px solid var(--gray-100);
+            }
+
+            .search-input-group {
+                background: var(--gray-100);
+                border: 1px solid rgba(0, 0, 0, 0.05);
+                border-radius: 50px;
+                padding: 0 1rem;
+                height: 44px;
+                transition: all 0.2s ease;
+            }
+
+            .search-input-group:focus-within {
+                background: white;
+                border-color: var(--primary-light);
+                box-shadow: 0 4px 12px rgba(133, 105, 90, 0.1);
+            }
+
+            .search-input {
+                font-size: 1rem;
+                height: 100%;
+            }
+
+            .category-filter {
+                position: sticky;
+                top: 0;
+                z-index: 40;
+                padding: 0.8rem 0.75rem;
+                border-bottom: 1px solid var(--gray-200);
+                background: rgba(255, 255, 255, 0.85);
+                backdrop-filter: blur(15px);
+                display: flex;
+                gap: 0.6rem;
+                overflow-x: auto;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+            }
+
+            .category-filter::-webkit-scrollbar {
+                display: none;
+            }
+
+            .category-btn {
+                padding: 0.5rem 1.25rem;
+                font-size: 0.8rem;
+                border-radius: 50px;
+                border: 1px solid var(--gray-300);
+                background: white;
+                color: var(--gray-700);
+                white-space: nowrap;
+                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                font-weight: 500;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+                flex-shrink: 0;
+            }
+
+            .category-btn.active {
+                background: var(--primary);
+                color: white;
+                border-color: var(--primary);
+                box-shadow: 0 4px 10px rgba(133, 105, 90, 0.3);
+            }
+
+            .products-grid-container {
+                padding: 1rem 0.75rem;
+                flex: 1;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                background: var(--gray-50);
+            }
+
+            .products-grid {
+                display: flex;
+                flex-direction: column;
+                gap: 0;
+                background: white;
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            }
+
+            .product-card {
+                padding: 1.15rem 1rem;
+                min-height: auto;
+                border-radius: 0;
+                background: white;
+                border: none;
+                border-bottom: 1px solid var(--gray-100);
+                box-shadow: none;
+                transition: background 0.2s ease;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                text-align: left;
+                position: relative;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .product-card:last-child {
+                border-bottom: none;
+            }
+
+            .product-card:active {
+                background: var(--brown-50);
+                transform: none;
+            }
+
+            .product-icon,
+            .stock-badge {
+                display: none !important;
+            }
+
+            .product-name {
+                font-size: 0.92rem;
+                font-weight: 600;
+                color: var(--gray-800);
+                margin-bottom: 0;
+                flex: 1;
+                line-height: 1.3;
+                padding-right: 1rem;
+                display: block;
+                overflow: visible;
+                text-overflow: unset;
+                -webkit-line-clamp: unset;
+            }
+
+            .product-price {
+                font-size: 0.95rem;
+                font-weight: 700;
+                color: var(--primary);
+                white-space: nowrap;
+            }
+
+            .product-info-stack {
+                align-items: flex-end;
+                text-align: right;
+            }
+
+            /* Bottom Navigation */
+            /* Bottom Navigation */
+            .bottom-nav {
+                display: flex;
+                height: 65px;
+                background: white;
+                border-top: 1px solid var(--gray-200);
+                padding-bottom: env(safe-area-inset-bottom);
+                /* Fixed positioning */
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                z-index: 1000;
+                box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.06);
+            }
+
+            .nav-item {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                color: var(--gray-700);
+                text-decoration: none;
+                font-size: 0.72rem;
+                font-weight: 600;
+                gap: 0.25rem;
+                opacity: 0.55;
+                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            .nav-item.active {
+                color: var(--primary);
+                opacity: 1;
+            }
+
+            .nav-item i {
+                font-size: 1.25rem;
+            }
+
+            /* Floating Cart Button */
+            .fab-cart {
+                position: fixed;
+                bottom: 85px;
+                right: 20px;
+                width: 60px;
+                height: 60px;
+                background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+                color: white;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 6px 20px rgba(133, 105, 90, 0.45);
+                z-index: 100;
+                border: none;
+                transition: transform 0.2s, background 0.2s;
+            }
+
+            .fab-cart:active {
+                transform: scale(0.92);
+            }
+
+            .fab-badge {
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                background: var(--danger);
+                color: white;
+                border-radius: 50%;
+                width: 24px;
+                height: 24px;
+                font-size: 0.7rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 700;
+                border: 2px solid white;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            }
+
+            .cart-items {
+                flex: 1;
+                max-height: none;
+                overflow-y: auto;
+            }
+
+            .cart-footer {
+                padding: 1rem;
+                background: rgba(255, 255, 255, 0.9);
+                backdrop-filter: blur(15px);
+                border-top: 1px solid var(--gray-200);
+            }
+
+            .btn-checkout {
+                min-height: 54px;
+                border-radius: 14px;
+                font-size: 1.05rem;
+            }
+
+        }
+
+        /* Responsive Visibility Helpers */
+        @media (max-width: 576px) {
+            .pos-main>.cart-section {
+                display: none !important;
+            }
+        }
+
+        @media (min-width: 577px) {
+
+            .bottom-nav,
+            .fab-cart,
+            #mobileCartView {
+                display: none !important;
+            }
+
+            .pos-main>.cart-section {
+                display: flex !important;
+            }
+        }
+
+        /* EXTRA SMALL SCREENS */
+        @media (max-width: 768px) {
+            .navbar-brand {
+                font-size: 0.85rem;
+            }
+
+            /* Center and Tidy Keypad Modal on Mobile */
+            #keypadModal .modal-dialog {
+                margin: 0.5rem auto;
+                display: flex;
+                align-items: center;
+                min-height: calc(100% - 1rem);
+            }
+
+            #keypadModal .modal-content {
+                border-radius: 24px;
+                border: none;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+                max-height: 90vh;
+                overflow-y: auto !important;
+            }
+
+            .keyboard-active {
+                height: 100vh !important;
+                overflow: hidden !important;
+            }
+
+            .keyboard-active #keypadModal {
+                padding-bottom: 300px;
+                /* Space for virtual keyboard */
+            }
+
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
+                gap: 0.5rem;
+            }
+
+            .payment-methods {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .products-grid-container,
+            .search-section {
+                padding: 0.5rem;
+            }
+
+            .category-filter {
+                padding: 0.6rem 0.5rem;
+                gap: 0.35rem;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.07);
+            }
+
+            .category-btn {
+                padding: 0.5rem 0.85rem;
+                font-size: 0.72rem;
+                min-height: 36px;
+                border-radius: 7px;
+                min-width: 60px;
+            }
+        }
+
+        /* MOBILE ONLY SCANNER UI - Enabled for all sizes but styled differently */
+        @media (min-width: 1024px) {
+            #navScannerMobile {
+                display: none !important;
+            }
+        }
+
+        .promo-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: var(--color-danger);
+            color: white;
+            padding: 0.2rem 0.5rem;
+            font-size: 0.65rem;
+            font-weight: 800;
+            border-bottom-left-radius: 8px;
+            z-index: 2;
+            box-shadow: -2px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .pulsate-slow {
+            animation: pulsate 2s infinite ease-in-out;
+        }
+
+        @keyframes pulsate {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .expiry-badge {
+            position: absolute;
+            top: 0;
+            left: 0;
+            padding: 0.2rem 0.5rem;
+            font-size: 0.65rem;
+            font-weight: 800;
+            border-bottom-right-radius: 8px;
+            z-index: 2;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .expiry-badge.expired {
+            background: var(--color-danger);
+            color: white;
+        }
+
+        .expiry-badge.expiring {
+            background: var(--color-warning);
+            color: var(--brown-900);
+        }
+
+        .expiry-badge.expiring {
+            background: var(--color-warning);
+            color: var(--brown-900);
+        }
+
+        /* FIX TABLET SCROLLING */
+        @media (max-width: 1024px) {
+            .products-section {
+                /* Ensure section takes full available height */
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+
+            .products-grid-container {
+                /* Force container to take remaining space and scroll */
+                flex: 1;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch;
+                height: 0;
+                /* Important for flex child scrolling */
+                min-height: 0;
+            }
+        }
+
+        /* FIX MOBILE CART VIEW OVERLAP */
+        #mobileCartView {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 1100;
+            /* Higher than fixed bottom nav (1000) */
+            display: none;
+            flex-direction: column;
+        }
+
+        #mobileCartView.active {
+            display: flex;
+        }
+
+        #mobileCartView .cart-footer {
+            padding-bottom: 2rem;
+            /* Ensure buttons have space */
+        }
+
+        /* SHORTCUT HINTS */
+        .shortcut-hint {
+            font-size: 0.65rem;
+            background: rgba(0, 0, 0, 0.15);
+            padding: 1px 5px;
+            border-radius: 4px;
+            margin-left: 6px;
+            font-family: 'Segoe UI Mono', monospace;
+            font-weight: 700;
+            display: inline-block;
+            vertical-align: middle;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        [data-bs-theme="dark"] .shortcut-hint {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-shortcut-help {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.35rem 0.65rem;
+            color: rgba(255, 255, 255, 0.9);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.85rem;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .btn-shortcut-help:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+        }
+
+        /* Standardize for all themes since POS navbar is always dark (brown or black) */
+        [data-bs-theme="dark"] .btn-shortcut-help {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="pos-container">
+        <!-- NAVBAR -->
+        <div class="pos-navbar">
+            <div class="navbar-brand d-flex align-items-center">
+                <img src="{{ asset('img/logo2.png') }}" alt="ARTIKA Logo" style="height: 38px; width: auto;">
+            </div>
+            <div class="navbar-right">
+                <!-- Shortcut Help Button -->
+                <button class="btn btn-shortcut-help d-none d-md-flex me-2" onclick="openShortcutGuide()"
+                    title="Panduan Shortcut (F1)">
+                    <i class="fas fa-keyboard"></i>
+                    <span>Shortcut <small class="opacity-75">[F1]</small></span>
+                </button>
+
+                <div class="dropdown">
+                    <button class="btn p-0 border-0 profile-trigger d-flex align-items-center" type="button"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="profile-avatar me-3">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <div class="d-none d-lg-flex flex-column align-items-start me-2">
+                            <span class="text-white fw-700 mb-0"
+                                style="font-size: 1rem; line-height: 1.1;">{{ $user?->name }}</span>
+                            <span class="text-white-50 fw-700 text-uppercase"
+                                style="font-size: 0.75rem; letter-spacing: 0.05em;">{{ $user?->role?->name }}</span>
+                        </div>
+                    </button>
+                    <x-pos-profile-dropdown />
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN -->
+        <div class="pos-main">
+            <!-- PRODUCTS -->
+            <div class="products-section">
+                <!-- SEARCH & BARCODE -->
+                <div class="search-section">
+                    <div class="dual-search-container">
+                        <div class="search-input-group">
+                            <span class="search-icon"><i class="fas fa-search"></i></span>
+                            <input type="text" id="productSearch" class="search-input"
+                                placeholder="{{ __('common.search_product') }}" autocomplete="off">
+                        </div>
+                        <div class="barcode-input-group">
+                            <span class="search-icon"><i class="fas fa-barcode"></i></span>
+                            <input type="text" id="barcodeScannerInput" class="barcode-input"
+                                placeholder="Scan Barcode [F4]..." autofocus autocomplete="off" inputmode="none">
+                        </div>
+
+                        @if(\App\Models\Setting::get('cashier_enable_camera', true))
+                            <!-- Mobile/Tablet Scanner Button (Takes 2nd slot or stacks) -->
+                            <div class="scanner-btn-group">
+                                <button id="openScannerBtn"
+                                    class="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2">
+                                    <i class="fas fa-camera"></i> <span>Scan Barcode</span>
+                                </button>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+
+                <!-- CATEGORIES -->
+                <div class="category-filter">
+                    <button class="category-btn active" data-category="all">{{ __('common.all') }}</button>
+                    @foreach($categories as $category)
+                        <button class="category-btn" data-category="{{ $category->id }}">{{ $category->name }}</button>
+                    @endforeach
+                </div>
+
+                <!-- PRODUCTS GRID -->
+                <div class="products-grid-container">
+                    <div class="products-grid" id="productsGrid">
+                        @foreach($products as $product)
+                            @php
+                                $totalStock = $product->available_stock;
+                                $actualTotalStock = $product->total_stock;
+                                $isOutOfStock = $totalStock <= 0;
+
+                                if ($actualTotalStock > 0 && $totalStock <= 0) {
+                                    continue;
+                                }
+
+                                $promo = $activePromos->where('product_id', $product->id)->first()
+                                    ?? $activePromos->where('category_id', $product->category_id)->first();
+
+                                $promoPrice = $product->price;
+                                $hasPromo = false;
+                                if ($promo) {
+                                    $hasPromo = true;
+                                    if ($promo->type === 'percentage') {
+                                        $promoPrice = $product->price * (1 - $promo->value / 100);
+                                    } else {
+                                        $promoPrice = max(0, $product->price - $promo->value);
+                                    }
+                                }
+
+                                $expiry = $product->next_expiry;
+                                $isExpiringSoon = $expiry && \Carbon\Carbon::parse($expiry)->diffInDays(now()->startOfDay()) < 30;
+                            @endphp
+                            <div class="product-card {{ $isOutOfStock ? 'opacity-50' : '' }}"
+                                data-product-id="{{ $product->id }}" data-category="{{ $product->category_id }}"
+                                data-name="{{ $product->name }}" data-price="{{ $product->price }}"
+                                data-promo-price="{{ $promoPrice }}" data-stock="{{ $totalStock }}"
+                                data-barcode="{{ $product->barcode }}"
+                                data-expiry="{{ $expiry ? \Carbon\Carbon::parse($expiry)->format('Y-m-d') : '' }}">
+
+                                @if($hasPromo)
+                                    <div class="promo-badge pulsate-slow">
+                                        {{ $promo->type === 'percentage' ? '-' . round($promo->value) . '%' : '-Rp' . number_format($promo->value, 0, ',', '.') }}
+                                    </div>
+                                @endif
+
+                                @if($isExpiringSoon)
+                                    <div class="expiry-badge expiring bg-warning text-dark">
+                                        <i class="fas fa-hourglass-half"></i>
+                                        {{ (int) \Carbon\Carbon::parse($expiry)->diffInDays(now()->startOfDay()) }}d
+                                    </div>
+                                @endif
+
+                                @if(\App\Models\Setting::get('cashier_enable_product_photos', true))
+                                    <div class="product-image-wrapper">
+                                        @if($product->image && file_exists(public_path($product->image)))
+                                            <img src="{{ asset($product->image) }}" alt="{{ $product->name }}" loading="lazy">
+                                        @else
+                                            <div class="text-muted opacity-25">
+                                                <i class="fas fa-image fa-3x"></i>
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endif
+
+                                <div class="product-card-body">
+                                    <div class="product-name">
+                                        {{ $product->name }}
+                                    </div>
+
+                                    <div class="product-price">
+                                        @if($hasPromo && $promoPrice < $product->price)
+                                            <span
+                                                class="text-decoration-line-through small me-1">Rp{{ number_format($product->price, 0, ',', '.') }}</span>
+                                            <div class="discounted-price">Rp{{ number_format($promoPrice, 0, ',', '.') }}</div>
+                                        @else
+                                            <div class="discounted-price">Rp{{ number_format($product->price, 0, ',', '.') }}
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    <div class="product-stock {{ $isOutOfStock ? 'out-of-stock' : '' }}">
+                                        {{ __('pos.qty') }}: {{ $totalStock }}
+                                    </div>
+
+                                    <button class="btn-add-product">
+                                        <i class="fas fa-plus me-1"></i> {{ __('common.add') }}
+                                    </button>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            <!-- CART -->
+            <div class="cart-section">
+                <!-- CART HEADER -->
+                <div class="cart-header">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <div class="cart-title mb-0"><i class="fas fa-shopping-basket"></i> {{ __('pos.cart') }}</div>
+                        <button class="btn btn-sm btn-light opacity-75" id="btnHeldList" onclick="openHeldModal()"
+                            title="Daftar Hold">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                    <div class="summary-stats mt-2">
+                        <div class="stat-item">
+                            <div class="stat-label">{{ __('pos.items') }}</div>
+                            <div class="stat-value cartItemCount">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">{{ __('pos.qty') }}</div>
+                            <div class="stat-value cartQtyCount">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CART ITEMS -->
+                <div class="cart-items cartItemsContainer" id="cartItems">
+                    <div class="cart-empty">{{ __('pos.cart_empty') }}</div>
+                </div>
+
+                <!-- FOOTER -->
+                <div class="cart-footer">
+                    <!-- TOTALS -->
+                    <div class="totals-section">
+                        @if(\App\Models\Setting::get('cashier_enable_discounts', true))
+                            <div class="total-row discount-row"
+                                style="border-bottom: 1px dashed rgba(0,0,0,0.1); padding-bottom: 5px; margin-bottom: 5px;">
+                                <span style="font-size: 0.8rem; color: #666;"><i
+                                        class="fas fa-tag me-1"></i>{{ __('pos.discount') }}:</span>
+                                <div class="d-flex align-items-center">
+                                    <span class="text-danger fw-bold me-2" id="discountDisplay">-Rp0</span>
+                                    <button class="btn btn-sm btn-outline-secondary py-0 px-1"
+                                        style="font-size: 0.7rem; height: 18px;" onclick="toggleManualDiscount()"><i
+                                            class="fas fa-edit"></i></button>
+                                </div>
+                            </div>
+                            <div id="manualDiscountInputSection" style="display: none; margin-bottom: 10px;">
+                                <div class="input-group input-group-sm">
+                                    <select id="discountType" class="form-select form-select-sm"
+                                        style="max-width: 80px; font-size: 0.75rem;" onchange="updateTotals()">
+                                        <option value="nominal">Rp</option>
+                                        <option value="percentage">%</option>
+                                    </select>
+                                    <input type="number" id="manualDiscountValue" class="form-control form-control-sm"
+                                        placeholder="0" min="0" oninput="updateTotals()">
+                                </div>
+                            </div>
+                        @endif
+                        <div class="total-row">
+                            <span class="fw-bold">{{ __('common.total') }}:</span>
+                            <span class="totalDisplay fw-bold" id="totalDisplay">Rp0</span>
+                        </div>
+                    </div>
+
+                    <!-- PAYMENT -->
+                    <div class="payment-section">
+                        <label class="payment-label"><i class="fas fa-wallet"></i>
+                            {{ __('pos.payment_method') }}</label>
+                        <div class="payment-methods">
+                            @foreach($paymentMethods as $method)
+                                <button
+                                    class="payment-method-btn paymentMethodBtn {{ $method->slug === 'cash' ? 'active' : '' }}"
+                                    data-method="{{ $method->slug }}"
+                                    data-proof-requirement="{{ $method->proof_requirement }}">
+                                    @if($method->icon)
+                                        <i class="{{ $method->icon }} me-1"></i>
+                                    @endif
+                                    {{ $method->name }}
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <!-- BUTTONS -->
+                    <div class="checkout-buttons">
+                        <button class="btn-checkout bg-danger btn-cancel clearBtn" id="clearBtn"
+                            title="Hapus Keranjang (Alt + C)">
+                            <i class="fas fa-trash text-white opacity-90"></i>
+                            <span class="shortcut-hint d-none d-lg-inline-block">Alt+C</span>
+                        </button>
+                        <button class="btn-checkout btn-primary" id="btnHold" onclick="holdTransaction()"
+                            title="Tunda Transaksi (F9)">
+                            <i class="fas fa-pause"></i>
+                            <span class="shortcut-hint d-none d-lg-inline-block">F9</span>
+                        </button>
+                        <button class="btn-checkout btn-finish checkoutBtn" id="checkoutBtn" onclick="checkout()"
+                            disabled>
+                            <i class="fas fa-check-circle me-1"></i> {{ __('pos.checkout') }}
+                            <span class="shortcut-hint d-none d-lg-inline-block">F2</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MOBILE CART VIEW (OVERLAY) -->
+            <div id="mobileCartView">
+                <div class="cart-header">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <div class="cart-title mb-0" id="closeCartBtn">
+                            <i class="fas fa-arrow-left me-2"></i> {{ __('pos.cart') }}
+                        </div>
+                        <button class="btn btn-sm btn-light opacity-75" onclick="openHeldModal()" title="Daftar Hold">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                    <div class="summary-stats">
+                        <div class="stat-item">
+                            <div class="stat-label">{{ __('pos.items') }}</div>
+                            <div class="stat-value cartItemCount">0</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="cart-items cartItemsContainer" id="cartItemsMobile">
+                    <div class="cart-empty">{{ __('pos.cart_empty') }}</div>
+                </div>
+                <div class="cart-footer">
+                    <div class="totals-section">
+                        @if(\App\Models\Setting::get('cashier_enable_discounts', true))
+                            <div class="total-row" style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">
+                                <span>{{ __('pos.discount') }}:</span>
+                                <div class="d-flex align-items-center">
+                                    <span class="text-danger fw-bold me-2" id="discountDisplayMobile">-Rp0</span>
+                                    <button class="btn btn-sm btn-outline-secondary py-0 px-1"
+                                        onclick="toggleManualDiscount()"><i class="fas fa-edit"></i></button>
+                                </div>
+                            </div>
+                        @endif
+                        <div class="total-row final">
+                            <span>{{ __('common.total') }}:</span>
+                            <span class="totalDisplay">Rp0</span>
+                        </div>
+                    </div>
+                    <div class="payment-section">
+                        <div class="payment-methods">
+                            @foreach($paymentMethods as $method)
+                                <button
+                                    class="payment-method-btn paymentMethodBtn {{ $method->slug === 'cash' ? 'active' : '' }} {{ $loop->last && $loop->count % 2 != 0 ? 'full-width' : '' }}"
+                                    data-method="{{ $method->slug }}"
+                                    data-proof-requirement="{{ $method->proof_requirement }}">
+                                    @if($method->icon)
+                                        <i class="{{ $method->icon }} me-1"></i>
+                                    @endif
+                                    {{ $method->name }}
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+                    <div class="checkout-buttons">
+                        <button class="btn-checkout btn-cancel clearBtn"><i class="fas fa-trash"></i></button>
+                        <button class="btn-checkout btn-primary" onclick="holdTransaction()"><i
+                                class="fas fa-pause"></i></button>
+                        <button class="btn-checkout btn-finish checkoutBtn" disabled>
+                            <i class="fas fa-check-circle me-2"></i> {{ __('pos.checkout') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAB for Mobile -->
+        <button class="fab-cart" id="fabCart" style="display: none;">
+            <i class="fas fa-shopping-cart"></i>
+            <span class="fab-badge cartQtyCount">0</span>
+        </button>
+
+        <!-- BOTTOM NAV for Mobile -->
+        <div class="bottom-nav">
+            <a href="#" class="nav-item active" id="navShop">
+                <i class="fas fa-th-large"></i>
+                <span>Produk</span>
+            </a>
+            <a href="#" class="nav-item" id="navCart">
+                <i class="fas fa-shopping-basket"></i>
+                <span>Keranjang</span>
+            </a>
+            @if(\App\Models\Setting::get('cashier_enable_camera', true))
+                <a href="#" class="nav-item" id="navScannerMobile">
+                    <i class="fas fa-barcode"></i>
+                    <span>Scan</span>
+                </a>
+            @endif
+            <a href="{{ route('pos.history') }}" class="nav-item">
+                <i class="fas fa-history"></i>
+                <span>Riwayat</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- SHORTCUT GUIDE MODAL -->
+    <div class="modal fade" id="shortcutGuideModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title text-white fw-bold"><i class="fas fa-keyboard me-2"></i> Panduan Shortcut
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="d-flex flex-column gap-3">
+                        <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
+                            <span class="fw-600">Buka Panduan Ini</span>
+                            <span class="badge bg-secondary p-2 px-3 fw-bold">F1</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
+                            <span class="fw-600">Selesaikan Pembayaran (Checkout)</span>
+                            <span class="badge bg-success p-2 px-3 fw-bold">F2</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
+                            <span class="fw-600">Fokus ke Area Scan Barcode</span>
+                            <span class="badge bg-primary p-2 px-3 fw-bold">F4</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
+                            <span class="fw-600">Lihat Daftar Transaksi Tertunda</span>
+                            <span class="badge bg-dark p-2 px-3 fw-bold">F8</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
+                            <span class="fw-600">Tunda Transaksi Sekarang (Hold)</span>
+                            <span class="badge bg-info text-dark p-2 px-3 fw-bold">F9</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
+                            <span class="fw-600">Kosongkan Keranjang Belanja</span>
+                            <span class="badge bg-danger p-2 px-3 fw-bold">Alt + C</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center p-2">
+                            <span class="fw-600">Tutup Modal / Bersihkan Input</span>
+                            <span class="badge bg-light text-dark border p-2 px-3 fw-bold">Esc</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-3 bg-light rounded text-center small text-muted">
+                        Gunakan tombol shortcut di atas untuk mempercepat proses transaksi di kasir.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="keypadModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 320px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title">{{ __('pos.cash_amount') }}</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Cash Input Section -->
+                    <div id="cashInputSection">
+                        <input type="text" id="keypadDisplay" class="form-control"
+                            style="font-size: 1.2rem; font-weight: bold; text-align: right; margin-bottom: 1rem; padding: 10px;"
+                            placeholder="0" autocomplete="off" inputmode="numeric">
+                        <div class="numeric-keypad">
+                            <button class="keypad-btn" data-key="1">1</button>
+                            <button class="keypad-btn" data-key="2">2</button>
+                            <button class="keypad-btn" data-key="3">3</button>
+                            <button class="keypad-btn" data-key="4">4</button>
+                            <button class="keypad-btn" data-key="5">5</button>
+                            <button class="keypad-btn" data-key="6">6</button>
+                            <button class="keypad-btn" data-key="7">7</button>
+                            <button class="keypad-btn" data-key="8">8</button>
+                            <button class="keypad-btn" data-key="9">9</button>
+                            <button class="keypad-btn" data-key="0" style="grid-column: 1 / 3;">0</button>
+                            <button class="keypad-btn delete" id="keypadDelete"><i
+                                    class="fas fa-backspace"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Non-Cash Upload Section -->
+                    <div id="nonCashInputSection" style="display: none;">
+                        <div class="text-center mb-3">
+                            <label class="form-label fw-bold">{{ __('pos.upload_proof') }} <small
+                                    class="text-muted">{{ __('pos.optional') }}</small></label>
+
+                            <!-- Preview Area -->
+                            <div id="previewContainer" class="d-none mb-3">
+                                <img id="imagePreview" src="" alt="Preview" class="img-fluid rounded mb-2"
+                                    style="max-height: 200px;">
+                                <button type="button" class="btn btn-sm btn-outline-danger w-100"
+                                    id="removeImageBtn">{{ __('pos.retake_photo') }}</button>
+                            </div>
+
+                            <!-- Upload Buttons -->
+                            <div id="uploadButtons" class="d-grid gap-2">
+                                <button type="button" class="btn btn-primary" id="btnCamera">
+                                    <i class="fas fa-camera me-2"></i> {{ __('pos.take_photo') }}
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="btnGallery">
+                                    <i class="fas fa-image me-2"></i> {{ __('pos.choose_from_gallery') }}
+                                </button>
+                            </div>
+
+                            <!-- Hidden Inputs -->
+                            <input type="file" id="inputCamera" class="d-none" accept="image/*" capture="environment">
+                            <input type="file" id="inputGallery" class="d-none" accept="image/*">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary"
+                        data-bs-dismiss="modal">{{ __('pos.cancel') }}</button>
+                    <button type="button" class="btn" style="background: var(--primary); color: white;"
+                        id="keypadConfirm" onmousedown="event.preventDefault()">{{ __('pos.confirm') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HELD TRANSACTIONS MODAL -->
+    <div class="modal fade" id="heldTransactionsModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title"><i class="fas fa-list me-2"></i> Transaksi Tertunda</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-3">Waktu</th>
+                                    <th>Item</th>
+                                    <th class="text-end">Total</th>
+                                    <th class="text-center pe-3">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="heldTransactionsTableBody">
+                                <!-- Loading state -->
+                                <tr>
+                                    <td colspan="4" class="text-center py-4">
+                                        <i class="fas fa-spinner fa-spin me-2"></i> Memuat data...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @vite(['resources/js/app.js'])
+    <script>
+        // Professional Notification Helpers
+        const ArtikaToast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            customClass: { popup: 'artika-swal-toast' },
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
+        });
+
+        function showToast(icon, title) {
+            ArtikaToast.fire({ icon: icon, title: title });
+        }
+
+        function confirmAction(options = {}) {
+            const defaults = {
+                title: '{{ __("pos.are_you_sure?") }}',
+                text: "{{ __('pos.this_action_cannot_be_undone') }}",
+                icon: 'warning',
+                confirmButtonText: '{{ __("pos.yes_continue") }}',
+                cancelButtonText: '{{ __("pos.hold_transaction_cancel") }}'
+            };
+            const settings = { ...defaults, ...options };
+            return Swal.fire({
+                title: settings.title,
+                text: settings.text,
+                icon: settings.icon,
+                showCancelButton: true,
+                confirmButtonColor: 'var(--color-primary-dark)',
+                cancelButtonColor: 'var(--gray-100)',
+                confirmButtonText: settings.confirmButtonText,
+                cancelButtonText: settings.cancelButtonText,
+                customClass: {
+                    popup: 'artika-swal-popup',
+                    title: 'artika-swal-title',
+                    confirmButton: 'artika-swal-confirm-btn',
+                    cancelButton: 'artika-swal-cancel-btn'
+                },
+                buttonsStyling: false
+            });
+        }
+
+        // --- KEYBOARD SHORTCUTS SYSTEM ---
+
+        function openShortcutGuide() {
+            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('shortcutGuideModal'));
+            modal.show();
+        }
+
+        function refocusBarcode() {
+            const barcodeInput = document.getElementById('barcodeScannerInput');
+            const modals = ['keypadModal', 'heldTransactionsModal', 'shortcutGuideModal'];
+            const isAnyModalOpen = modals.some(id => {
+                const el = document.getElementById(id);
+                return el && el.classList.contains('show');
+            });
+
+            // Focus barcode input if no modals are open AND it's a desktop-sized screen 
+            // Avoid refocus on mobile/tablets to prevent keyboard popping up unexpectedly
+            if (barcodeInput && !isAnyModalOpen && window.innerWidth >= 1025) {
+                barcodeInput.focus();
+            }
+        }
+
+        // Global Keyboard Shortcut Listener
+        document.addEventListener('keydown', function (e) {
+            // [F1] - Show Shortcut Guide
+            if (e.key === 'F1') {
+                e.preventDefault();
+                openShortcutGuide();
+                return;
+            }
+
+            // [F2] - Checkout (Bayar)
+            if (e.key === 'F2') {
+                e.preventDefault();
+                const checkoutBtn = document.getElementById('checkoutBtn');
+                if (checkoutBtn && !checkoutBtn.disabled) {
+                    checkout();
+                } else if (cart.length === 0) {
+                    showToast('warning', 'Keranjang masih kosong!');
+                }
+                return;
+            }
+
+            // [F4] - Focus Barcode Input
+            if (e.key === 'F4') {
+                e.preventDefault();
+                const barcodeInput = document.getElementById('barcodeScannerInput');
+                if (barcodeInput) {
+                    barcodeInput.focus();
+                    barcodeInput.value = '';
+                    showToast('info', 'Siap scan barcode...');
+                }
+                return;
+            }
+
+            // [F8] - Toggle Held Transactions List
+            if (e.key === 'F8') {
+                e.preventDefault();
+                openHeldModal();
+                return;
+            }
+
+            // [F9] - Hold (Tunda) Transaction
+            if (e.key === 'F9') {
+                e.preventDefault();
+                if (cart.length > 0) {
+                    holdTransaction();
+                } else {
+                    showToast('warning', 'Tidak ada item untuk ditunda');
+                }
+                return;
+            }
+
+            // [Alt + C] - Clear Cart (Hapus)
+            if (e.altKey && (e.key === 'c' || e.key === 'C')) {
+                e.preventDefault();
+                if (cart.length > 0) {
+                    clearCart();
+                }
+                return;
+            }
+
+            // [Esc] - Global Escape Handler
+            if (e.key === 'Escape') {
+                // Check if any modal is open and let Bootstrap handle it naturally 
+                // but we also use it to clear search or focus scanner
+                const productSearch = document.getElementById('productSearch');
+                if (document.activeElement === productSearch) {
+                    productSearch.value = '';
+                    searchProducts();
+                    refocusBarcode();
+                }
+            }
+        });
+
+        // --- END SHORTCUTS SYSTEM ---
+
+        let cart = [];
+        let selectedPaymentMethod = null;
+        let scanner = null;
+        const activePromos = {!! json_encode($activePromos) !!};
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const productSearch = document.getElementById('productSearch');
+            const barcodeInput = document.getElementById('barcodeScannerInput');
+
+            document.querySelectorAll('.paymentMethodBtn').forEach((btn, idx) => {
+                if (idx === 0) {
+                    btn.classList.add('active');
+                    selectedPaymentMethod = btn.dataset.method;
+                }
+            });
+
+            document.querySelectorAll('.product-card').forEach(card => {
+                card.addEventListener('click', () => addToCart(card));
+            });
+
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.addEventListener('click', () => filterByCategory(btn));
+            });
+
+            document.querySelectorAll('.clearBtn').forEach(btn => {
+                btn.addEventListener('click', clearCart);
+            });
+
+            document.querySelectorAll('.checkoutBtn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    console.log('Checkout button clicked');
+                    checkout();
+                });
+            });
+
+            document.querySelectorAll('.paymentMethodBtn').forEach(btn => {
+                btn.addEventListener('click', () => selectPaymentMethod(btn.dataset.method));
+            });
+
+            if (productSearch) {
+                productSearch.addEventListener('keyup', searchProducts);
+            }
+
+            // Periodic Focus Enforcement (Faster 1s check)
+            // Disable auto-focus on touch devices (tablets/phones) to prevent keyboard popup
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+            setInterval(() => {
+                if (typeof refocusBarcode === 'function') refocusBarcode();
+            }, 1500);
+
+            // Global Barcode Scanner Listener (Take 5 - Consolidated & Safe)
+            let barcodeBuffer = '';
+            let lastKeyTime = Date.now();
+            let isProcessing = false; // Flag to prevent double triggers
+            let scanTimeout = null;
+            const SCAN_THRESHOLD = 500; // [RELAXED] Increased from 200ms to 500ms for slower scanners
+            const MIN_BARCODE_LENGTH = 3;
+            const SUBMIT_INACTIVITY_MS = 500; // [RELAXED] Increased from 300ms to 500ms for very slow scanners
+
+            document.addEventListener('keydown', function (e) {
+                // Ignore if currently processing a scan
+                if (isProcessing) return;
+
+                // Ignore modifier keys
+                if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab', 'Escape'].includes(e.key)) {
+                    return;
+                }
+
+                // [NEW] Ignore if typing in another input field (e.g., manual discount)
+                const isTargetInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName);
+                if (isTargetInput && e.target !== barcodeInput) {
+                    return;
+                }
+
+                // Ignore if in keypad modal, unless it's Enter 
+                const keypadModal = document.getElementById('keypadModal');
+                if (keypadModal && keypadModal.classList.contains('show')) {
+                    if (e.key !== 'Enter') return;
+                }
+
+                const currentTime = Date.now();
+                const timeDiff = currentTime - lastKeyTime;
+                lastKeyTime = currentTime;
+
+                // Reset inactivity timeout on every key
+                if (scanTimeout) clearTimeout(scanTimeout);
+
+                const isNumeric = /^[0-9]$/.test(e.key);
+                const isAlpha = /^[a-zA-Z]$/.test(e.key);
+                const isSpecial = /^[._\-\/]$/.test(e.key);
+                const isEnter = e.key === 'Enter';
+
+                const isFocused = document.activeElement === barcodeInput;
+
+                // Case 1: Handle Enter key (Final Search)
+                if (isEnter) {
+                    const finalBarcode = isFocused ? barcodeInput.value.trim() : barcodeBuffer.trim();
+                    if (finalBarcode.length >= MIN_BARCODE_LENGTH) {
+                        e.preventDefault();
+                        console.log(`[Scanner] Processing final barcode: ${finalBarcode}`);
+                        isProcessing = true;
+                        handleScannedBarcode(finalBarcode);
+
+                        // Cleanup
+                        barcodeBuffer = '';
+                        if (barcodeInput) barcodeInput.value = '';
+
+                        // Reset flag after a short delay
+                        setTimeout(() => { isProcessing = false; }, 500);
+                    } else {
+                        barcodeBuffer = '';
+                        if (barcodeInput && isFocused) barcodeInput.value = '';
+                    }
+                    return;
+                }
+
+                // Case 2: Accumulate Data
+                if (isNumeric || isAlpha || isSpecial) {
+                    if (timeDiff < SCAN_THRESHOLD) {
+                        // Rapid sequence (Scanner)
+                        if (!isFocused) {
+                            barcodeBuffer += e.key;
+                            if (barcodeInput) barcodeInput.value = barcodeBuffer;
+                        } else {
+                            // If focused, the browser adds the key to input natively.
+                            barcodeBuffer = barcodeInput.value + e.key;
+                        }
+                    } else {
+                        // New sequence (Manual or start of scan)
+                        barcodeBuffer = e.key;
+                        if (!isFocused && barcodeInput) {
+                            barcodeInput.value = barcodeBuffer;
+                        }
+                    }
+
+                    // [NEW] Set inactivity timeout to auto-submit 
+                    // This helps if the scanner doesn't send Enter or sends it very slowly
+                    if (barcodeBuffer.length >= MIN_BARCODE_LENGTH) {
+                        scanTimeout = setTimeout(() => {
+                            const currentVal = isFocused ? barcodeInput.value.trim() : barcodeBuffer.trim();
+                            // Auto-process if long enough and no match found yet via instant match
+                            if (currentVal.length >= 8 && !isProcessing) {
+                                console.log(`[Timeout] Auto-processing: ${currentVal}`);
+                                isProcessing = true;
+                                handleScannedBarcode(currentVal);
+                                barcodeBuffer = '';
+                                if (barcodeInput) barcodeInput.value = '';
+                                setTimeout(() => { isProcessing = false; }, 500);
+                            }
+                        }, SUBMIT_INACTIVITY_MS);
+                    }
+
+                    // [REFINED] Instant Match - Works for any length >= 8 if perfect match found
+                    const currentVal = isFocused ? (barcodeInput.value + e.key) : barcodeBuffer;
+                    if (currentVal.length >= 8) {
+                        const instantMatch = document.querySelector(`.product-card[data-barcode="${currentVal}"]`) ||
+                            document.querySelector(`.product-card[data-product-id="${currentVal}"]`);
+
+                        if (instantMatch) {
+                            console.log(`[Instant] Perfect match found for length ${currentVal.length}: ${currentVal}`);
+                            e.preventDefault();
+                            isProcessing = true;
+                            if (scanTimeout) clearTimeout(scanTimeout);
+                            handleScannedBarcode(currentVal);
+
+                            barcodeBuffer = '';
+                            if (barcodeInput) barcodeInput.value = '';
+
+                            setTimeout(() => { isProcessing = false; }, 500);
+                        }
+                    }
+                }
+            });
+
+            function handleScannedBarcode(barcode) {
+                if (!barcode) return;
+                barcode = barcode.trim();
+                console.log(`[Diagnostic] Processing barcode: "${barcode}"`);
+
+                // First check DOM for already loaded products (fast path)
+                let product = null;
+                const cards = document.querySelectorAll('.product-card');
+
+                for (let card of cards) {
+                    const cardBarcode = (card.dataset.barcode || '').trim();
+                    const cardId = (card.dataset.productId || '').trim();
+
+                    if (cardBarcode === barcode || cardId === barcode) {
+                        product = card;
+                        break;
+                    }
+                }
+
+                if (product) {
+                    processScannedProduct(product);
+                } else {
+                    // Fallback to API check if product is not currently loaded in DOM
+                    console.log(`[Diagnostic] Product not in DOM, querying backend for barcode: "${barcode}"`);
+                    fetch(`{{ route('pos.search') }}?q=${encodeURIComponent(barcode)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success && data.data.length > 0) {
+                                // Match exactly one product's barcode or ID
+                                const match = data.data.find(p => String(p.barcode) === barcode || String(p.id) === barcode);
+                                if (match) {
+                                    // Set search value so it renders immediately
+                                    const productSearch = document.getElementById('productSearch');
+                                    if (productSearch) {
+                                        productSearch.value = barcode;
+                                        searchProducts();
+
+                                        // Wait a tiny bit for DOM to render, then click it
+                                        setTimeout(() => {
+                                            const newCard = document.querySelector(`.product-card[data-barcode="${barcode}"]`) ||
+                                                document.querySelector(`.product-card[data-product-id="${barcode}"]`);
+                                            if (newCard) {
+                                                processScannedProduct(newCard);
+                                            } else {
+                                                showBarcodeNotFoundError(barcode);
+                                            }
+                                        }, 400);
+                                    }
+                                } else {
+                                    showBarcodeNotFoundError(barcode);
+                                }
+                            } else {
+                                showBarcodeNotFoundError(barcode);
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Error fetching barcode:', err);
+                            showBarcodeNotFoundError(barcode);
+                        });
+                }
+            }
+
+            function processScannedProduct(product) {
+                console.log(`[Success] Match found! Adding ${product.dataset.name} to cart.`);
+                const wasAdded = addToCart(product);
+
+                if (wasAdded) {
+                    playBeep();
+                    const price = parseFloat(product.dataset.promoPrice || product.dataset.price);
+                    const priceFormatted = 'Rp' + price.toLocaleString('id-ID');
+                    const existingItem = cart.find(item => item.product_id == product.dataset.productId);
+                    const qtyText = existingItem ? ' (x' + existingItem.quantity + ')' : '';
+                    showToast('success', product.dataset.name + qtyText + ' — ' + priceFormatted);
+                }
+
+                const productSearch = document.getElementById('productSearch');
+                if (productSearch) {
+                    productSearch.value = '';
+                    searchProducts();
+                }
+            }
+
+            function showBarcodeNotFoundError(barcode) {
+                console.warn(`[Fail] No product matches barcode: "${barcode}"`);
+                playErrorBeep();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Produk Tidak Ditemukan',
+                    html: '<div style="font-size:0.95rem;">Barcode: <strong>' + barcode + '</strong></div><div style="font-size:0.85rem;color:#888;margin-top:4px;">Produk tidak terdaftar di sistem ARTIKA.</div>',
+                    timer: 2500,
+                    showConfirmButton: false,
+                    allowEnterKey: false,
+                    customClass: {
+                        popup: 'artika-swal-popup',
+                        title: 'artika-swal-title'
+                    }
+                }).then(() => {
+                    const barcodeInput = document.getElementById('barcodeScannerInput');
+                    if (barcodeInput) {
+                        barcodeInput.value = '';
+                        barcodeInput.focus();
+                    }
+                });
+            }
+
+            // Scanner handlers with safeties
+            const openScannerBtn = document.getElementById('openScannerBtn');
+            if (openScannerBtn) openScannerBtn.addEventListener('click', openScanner);
+
+            const closeScannerBtn = document.getElementById('closeScannerBtn');
+            if (closeScannerBtn) closeScannerBtn.addEventListener('click', closeScanner);
+
+            const navScannerMobile = document.getElementById('navScannerMobile');
+            if (navScannerMobile) {
+                navScannerMobile.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    openScanner();
+                });
+            }
+
+            // ======== CAMERA SCANNER FUNCTIONS ========
+            let scannerLastBarcode = '';
+            let scannerLastTime = 0;
+            let scannerIsActive = false;
+            const SCANNER_COOLDOWN = 2000;
+
+            function openScanner() {
+                const section = document.getElementById('scannerSection');
+                const loading = document.getElementById('scannerLoading');
+                if (!section) {
+                    console.error('[Camera Scanner] scannerSection not found!');
+                    return;
+                }
+
+                console.log('[Camera Scanner] Opening scanner...');
+
+                // Show the overlay first
+                section.classList.add('active');
+                if (loading) {
+                    loading.innerHTML = '<div class="loading-spinner"></div><div>{{ __("pos.starting_camera") }}</div>';
+                    loading.style.display = 'block';
+                }
+
+                // Delay camera start to allow DOM to render the visible container
+                setTimeout(function () {
+                    startCameraScanner();
+                }, 400);
+            }
+
+            async function startCameraScanner() {
+                const loading = document.getElementById('scannerLoading');
+
+                // If scanner is already active, stop it first
+                if (scannerIsActive && scanner) {
+                    try {
+                        await scanner.stop();
+                        scannerIsActive = false;
+                    } catch (e) {
+                        console.warn('[Camera Scanner] Could not stop previous session:', e);
+                    }
+                }
+
+                // Create scanner instance if needed
+                if (!scanner) {
+                    try {
+                        scanner = new Html5Qrcode("reader");
+                    } catch (e) {
+                        console.error('[Camera Scanner] Failed to create Html5Qrcode instance:', e);
+                        if (loading) {
+                            loading.innerHTML = '<div style="color:#ef4444;padding:1.5rem;text-align:center;">' +
+                                '<div style="font-size:2.5rem;margin-bottom:0.75rem;"><i class="fas fa-video-slash"></i></div>' +
+                                '<div style="font-weight:700;margin-bottom:0.5rem;">Scanner Error</div>' +
+                                '<div style="font-size:0.85rem;">Html5Qrcode library not loaded.</div></div>';
+                            loading.style.display = 'block';
+                        }
+                        return;
+                    }
+                }
+
+                try {
+                    await scanner.start(
+                        { facingMode: "environment" },
+                        {
+                            fps: 10,
+                            qrbox: { width: 250, height: 250 },
+                            aspectRatio: 1.0
+                        },
+                        function (decodedText) {
+                            const now = Date.now();
+                            if (decodedText === scannerLastBarcode && (now - scannerLastTime) < SCANNER_COOLDOWN) {
+                                return;
+                            }
+                            scannerLastBarcode = decodedText;
+                            scannerLastTime = now;
+
+                            console.log('[Camera Scanner] Scanned:', decodedText);
+                            if (typeof handleScannedBarcode === 'function') {
+                                handleScannedBarcode(decodedText);
+                            }
+                        },
+                        function () {
+                            // Silent — normal during scanning
+                        }
+                    );
+
+                    scannerIsActive = true;
+                    if (loading) loading.style.display = 'none';
+                    console.log('[Camera Scanner] Started successfully');
+
+                } catch (err) {
+                    console.error('[Camera Scanner] Failed to start:', err);
+                    scannerIsActive = false;
+                    if (loading) {
+                        loading.innerHTML = '<div style="color:#ef4444;padding:1.5rem;text-align:center;">' +
+                            '<div style="font-size:2.5rem;margin-bottom:0.75rem;"><i class="fas fa-video-slash"></i></div>' +
+                            '<div style="font-weight:700;margin-bottom:0.5rem;">Gagal Akses Kamera</div>' +
+                            '<div style="font-size:0.85rem;opacity:0.9;">Pastikan izin kamera sudah diaktifkan.<br>Error: ' + (err.message || err) + '</div>' +
+                            '</div>';
+                        loading.style.display = 'block';
+                    }
+                }
+            }
+
+            async function closeScanner() {
+                const section = document.getElementById('scannerSection');
+                const loading = document.getElementById('scannerLoading');
+
+                console.log('[Camera Scanner] Closing scanner...');
+
+                if (scanner && scannerIsActive) {
+                    try {
+                        await scanner.stop();
+                        scannerIsActive = false;
+                        console.log('[Camera Scanner] Stopped');
+                    } catch (err) {
+                        console.warn('[Camera Scanner] Stop error:', err);
+                        scannerIsActive = false;
+                    }
+                }
+
+                if (section) section.classList.remove('active');
+                if (loading) {
+                    loading.innerHTML = '<div class="loading-spinner"></div><div>{{ __("pos.starting_camera") }}</div>';
+                    loading.style.display = 'none';
+                }
+            }
+
+            // Mobile Navigation and Cart logic
+            const mobileCartView = document.getElementById('mobileCartView');
+            const fabCart = document.getElementById('fabCart');
+            const navShop = document.getElementById('navShop');
+            const navCart = document.getElementById('navCart');
+            const closeCartBtn = document.getElementById('closeCartBtn');
+
+            function toggleMobileCart(show) {
+                if (show) {
+                    mobileCartView.classList.add('active');
+                    navCart.classList.add('active');
+                    if (navShop) navShop.classList.remove('active');
+                    fabCart.style.display = 'none';
+                } else {
+                    mobileCartView.classList.remove('active');
+                    navCart.classList.remove('active');
+                    if (navShop) navShop.classList.add('active');
+                    if (cart.length > 0) fabCart.style.display = 'flex';
+                }
+            }
+
+            if (navCart) navCart.addEventListener('click', (e) => {
+                e.preventDefault();
+                toggleMobileCart(true);
+            });
+            if (navShop) navShop.addEventListener('click', (e) => {
+                e.preventDefault();
+                toggleMobileCart(false);
+            });
+            if (fabCart) fabCart.addEventListener('click', () => toggleMobileCart(true));
+            if (closeCartBtn) closeCartBtn.addEventListener('click', () => toggleMobileCart(false));
+
+            // Auto-focus payment input when modal opens
+            const keypadModal = document.getElementById('keypadModal');
+            if (keypadModal) {
+                keypadModal.addEventListener('shown.bs.modal', function () {
+                    const display = document.getElementById('keypadDisplay');
+                    const cashSection = document.getElementById('cashInputSection');
+                    if (display && cashSection.style.display !== 'none') {
+                        display.focus();
+                    }
+                });
+
+                // [NEW] Refocus search bar after modal is closed
+                // [NEW] Refocus barcode input after modal is closed
+                keypadModal.addEventListener('hidden.bs.modal', function () {
+                    const barcodeInput = document.getElementById('barcodeScannerInput');
+                    if (barcodeInput && !isTouchDevice && window.innerWidth >= 1025) barcodeInput.focus();
+                });
+            }
+
+            try {
+                initializeKeypad();
+            } catch (e) {
+                console.error('Failed to initialize keypad:', e);
+            }
+        });
+
+        function addToCart(productCard) {
+            console.log('[Cart] addToCart called for:', productCard.dataset.name);
+            const productId = productCard.dataset.productId;
+            const productName = productCard.dataset.name;
+            const originalPrice = parseFloat(productCard.dataset.price);
+            const promoPrice = parseFloat(productCard.dataset.promoPrice || productCard.dataset.price);
+            const productPrice = promoPrice;
+            const productStock = parseInt(productCard.dataset.stock || 0);
+
+            const expiryDate = productCard.dataset.expiry;
+
+            // Expiry Check
+            if (expiryDate) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const expiry = new Date(expiryDate);
+                const diffDays = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+
+                if (diffDays <= 0) {
+                    playErrorBeep();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Produk Kadaluarsa!',
+                        text: `Produk "${productName}" sudah kadaluarsa sejak ${expiry.toLocaleDateString('id-ID')}. Pilih batch lain atau buang barang ini.`,
+                        customClass: { popup: 'artika-swal-popup', title: 'artika-swal-title', confirmButton: 'artika-swal-confirm-btn' },
+                        buttonsStyling: false
+                    });
+                    return false;
+                } else if (diffDays < 30) {
+                    ArtikaToast.fire({
+                        icon: 'warning',
+                        title: `Perhatian: Kadaluarsa dalam ${diffDays} hari (${expiry.toLocaleDateString('id-ID')})`
+                    });
+                }
+            }
+
+            console.log(`[Cart] Params: ID=${productId}, Name=${productName}, Price=${productPrice}, Original=${originalPrice}, Stock=${productStock}`);
+
+            const existingItem = cart.find(item => item.product_id == productId);
+
+            if (existingItem) {
+                console.log('[Cart] Item exists, increasing quantity');
+                if (existingItem.quantity + 1 > productStock) {
+                    playErrorBeep();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Stok Terbatas',
+                        text: `Hanya tersedia ${productStock} unit.`,
+                        allowEnterKey: false, // Prevents scanner Enter from closing it instantly
+                        customClass: {
+                            popup: 'artika-swal-popup',
+                            title: 'artika-swal-title',
+                            confirmButton: 'artika-swal-confirm-btn'
+                        },
+                        buttonsStyling: false
+                    });
+                    return false;
+                }
+                existingItem.quantity += 1;
+                existingItem.subtotal = existingItem.quantity * existingItem.price;
+            } else {
+                console.log('[Cart] New item, adding to array');
+                if (productStock <= 0) {
+                    playErrorBeep();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Stok Kosong',
+                        text: `Produk "${productName}" tidak memiliki stok di gudang.`,
+                        allowEnterKey: false, // Prevents scanner Enter from closing it instantly
+                        customClass: {
+                            popup: 'artika-swal-popup',
+                            title: 'artika-swal-title',
+                            confirmButton: 'artika-swal-confirm-btn'
+                        },
+                        buttonsStyling: false
+                    });
+                    return false;
+                }
+                cart.push({
+                    product_id: productId,
+                    name: productName,
+                    price: productPrice,
+                    originalPrice: originalPrice,
+                    quantity: 1,
+                    subtotal: productPrice,
+                    stock: productStock
+                });
+            }
+
+            console.log('[Cart] Current state:', JSON.stringify(cart));
+            updateCartDisplay();
+
+            // Show FAB on mobile if we're not in cart view
+            if (window.innerWidth <= 576 && !document.getElementById('mobileCartView').classList.contains('active')) {
+                document.getElementById('fabCart').style.display = 'flex';
+            }
+
+            return true;
+        }
+
+        function updateCartDisplay() {
+            const cartContainers = document.querySelectorAll('.cartItemsContainer');
+            const checkoutBtns = document.querySelectorAll('.checkoutBtn');
+            const fabCart = document.getElementById('fabCart');
+
+            console.log(`[Display] Found ${cartContainers.length} cart containers.`);
+
+            if (cart.length === 0) {
+                console.log('[Display] Cart is empty, rendering empty state');
+                cartContainers.forEach(c => c.innerHTML = '<div class="cart-empty">{{ __('pos.cart_empty') }}</div>');
+                checkoutBtns.forEach(b => b.disabled = true);
+                if (fabCart) fabCart.style.display = 'none';
+            } else {
+                console.log(`[Display] Rendering ${cart.length} items`);
+                const cartHtml = cart.map((item, index) => `
+                    <div class="cart-item">
+                        <div class="cart-item-header">
+                            <span class="cart-item-name">${item.name}</span>
+                            <span class="cart-item-price">Rp${formatCurrency(item.subtotal)}</span>
+                        </div>
+                        <div class="cart-item-details" style="margin-top: 0.5rem;">
+                            <div class="quantity-control">
+                                <button class="qty-btn" onclick="decreaseQuantity(${index})">-</button>
+                                <span class="qty-display">${item.quantity}</span>
+                                <button class="qty-btn" onclick="increaseQuantity(${index})">+</button>
+                            </div>
+                            <button class="cart-item-remove" onclick="removeFromCart(${index})">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+
+                cartContainers.forEach(c => c.innerHTML = cartHtml);
+                checkoutBtns.forEach(b => b.disabled = false);
+            }
+
+            updateTotals();
+        }
+
+        function increaseQuantity(index) {
+            if (cart[index].quantity + 1 > cart[index].stock) {
+                showToast('error', '{{ __('pos.stock_limit_reached') }} (' + cart[index].stock + ')');
+                return;
+            }
+            cart[index].quantity += 1;
+            cart[index].subtotal = cart[index].quantity * cart[index].price;
+            updateCartDisplay();
+        }
+
+        function decreaseQuantity(index) {
+            if (cart[index].quantity > 1) {
+                cart[index].quantity -= 1;
+                cart[index].subtotal = cart[index].quantity * cart[index].price;
+            } else {
+                removeFromCart(index);
+            }
+            updateCartDisplay();
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartDisplay();
+        }
+
+        function clearCart() {
+            if (cart.length > 0) {
+                confirmAction({
+                    text: '{{ __('pos.confirm_clear_cart') }}',
+                    confirmButtonText: '{{ __('common.delete') }}'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        cart = [];
+                        updateCartDisplay();
+                    }
+                });
+            }
+        }
+
+        function toggleManualDiscount() {
+            const section = document.getElementById('manualDiscountInputSection');
+            if (section) {
+                section.style.display = section.style.display === 'none' ? 'block' : 'none';
+                if (section.style.display === 'block') {
+                    document.getElementById('manualDiscountValue').focus();
+                }
+            }
+        }
+
+        function updateTotals() {
+            const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
+            const qtyCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+            let manualDiscount = 0;
+            const discountValueInput = document.getElementById('manualDiscountValue');
+            const discountTypeSelect = document.getElementById('discountType');
+
+            if (discountValueInput && discountValueInput.value > 0) {
+                const value = parseFloat(discountValueInput.value);
+                if (discountTypeSelect.value === 'percentage') {
+                    manualDiscount = subtotal * (value / 100);
+                } else {
+                    manualDiscount = value;
+                }
+            }
+
+            const total = Math.max(0, subtotal - manualDiscount);
+
+            document.querySelectorAll('.totalDisplay').forEach(el => el.textContent = 'Rp' + formatCurrency(total));
+            document.querySelectorAll('.cartItemCount').forEach(el => el.textContent = cart.length);
+            document.querySelectorAll('.cartQtyCount').forEach(el => el.textContent = qtyCount);
+
+            const discountDisplays = [document.getElementById('discountDisplay'), document.getElementById('discountDisplayMobile')];
+            discountDisplays.forEach(el => {
+                if (el) el.textContent = '-Rp' + formatCurrency(manualDiscount);
+            });
+        }
+
+        function selectPaymentMethod(method) {
+            document.querySelectorAll('.paymentMethodBtn').forEach(b => {
+                b.dataset.method === method ? b.classList.add('active') : b.classList.remove('active');
+            });
+            selectedPaymentMethod = method; // Track the specific method (cash, qris, transfer, etc.)
+        }
+
+        function filterByCategory(btn) {
+            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Trigger AJAX search instead of DOM filter
+            searchProducts();
+        }
+
+        let searchTimeout = null;
+        function searchProducts() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const searchTerm = document.getElementById('productSearch') ? document.getElementById('productSearch').value : '';
+                const activeCategoryBtn = document.querySelector('.category-btn.active');
+                const categoryId = activeCategoryBtn ? activeCategoryBtn.dataset.category : 'all';
+
+                // Show loading state (optional: you could add a spinner in productsGrid)
+                const grid = document.getElementById('productsGrid');
+                if (grid && grid.innerHTML.trim() !== '') {
+                    grid.style.opacity = '0.5';
+                }
+
+                fetch(`{{ route('pos.search') }}?q=${encodeURIComponent(searchTerm)}&category_id=${categoryId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            renderProducts(data.data);
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error fetching products:', err);
+                        if (grid) grid.style.opacity = '1';
+                    });
+            }, 300); // 300ms debounce
+        }
+
+        function renderProducts(products) {
+            const grid = document.getElementById('productsGrid');
+            if (!grid) return;
+
+            grid.style.opacity = '1';
+
+            if (products.length === 0) {
+                grid.innerHTML = '<div class="col-12 text-center py-5 text-muted"><i class="fas fa-box-open fa-3x mb-3 opacity-50"></i><br>Tidak ada produk ditemukan</div>';
+                return;
+            }
+
+            let html = '';
+            products.forEach(product => {
+                const totalStock = product.stocks ? product.stocks.reduce((sum, s) => {
+                    const isValid = !s.expired_at || new Date(s.expired_at) > new Date();
+                    return isValid ? sum + s.quantity : sum;
+                }, 0) : 0;
+
+                const actualTotalStock = product.stocks ? product.stocks.reduce((sum, s) => sum + s.quantity, 0) : 0;
+                const isOutOfStock = totalStock <= 0;
+
+                if (actualTotalStock > 0 && totalStock <= 0) return;
+
+                let promoPrice = product.price;
+                let hasPromo = false;
+                let promoBadgeHtml = '';
+
+                if (window.activePromos) {
+                    const promo = window.activePromos.find(p => p.product_id == product.id)
+                        || window.activePromos.find(p => p.category_id == product.category_id);
+                    if (promo) {
+                        hasPromo = true;
+                        if (promo.type === 'percentage') {
+                            promoPrice = product.price * (1 - promo.value / 100);
+                            promoBadgeHtml = `<div class="promo-badge pulsate-slow">-${Math.round(promo.value)}%</div>`;
+                        } else {
+                            promoPrice = Math.max(0, product.price - promo.value);
+                            promoBadgeHtml = `<div class="promo-badge pulsate-slow">-Rp${promo.value.toLocaleString('id-ID')}</div>`;
+                        }
+                    }
+                }
+
+                let expiryBadgeHtml = '';
+                let nextExpiry = '';
+                if (product.stocks && product.stocks.length > 0) {
+                    const validStocks = product.stocks.filter(s => s.quantity > 0 && s.expired_at).sort((a, b) => new Date(a.expired_at) - new Date(b.expired_at));
+                    if (validStocks.length > 0) {
+                        nextExpiry = validStocks[0].expired_at;
+                        const diffDays = Math.ceil((new Date(nextExpiry) - new Date()) / (1000 * 60 * 60 * 24));
+                        if (diffDays > 0 && diffDays < 30) {
+                            expiryBadgeHtml = `<div class="expiry-badge expiring bg-warning text-dark"><i class="fas fa-hourglass-half"></i> ${diffDays}d</div>`;
+                        }
+                    }
+                }
+
+                let imageHtml = '';
+                if (product.image) {
+                    imageHtml = `<img src="/${product.image}" alt="${product.name}" loading="lazy">`;
+                } else {
+                    imageHtml = `<div class="text-muted opacity-25"><i class="fas fa-image fa-3x"></i></div>`;
+                }
+
+                const priceDisplay = (hasPromo && promoPrice < product.price) ?
+                    `<span class="text-decoration-line-through small me-1">Rp${product.price.toLocaleString('id-ID')}</span>
+                     <div class="discounted-price">Rp${promoPrice.toLocaleString('id-ID')}</div>` :
+                    `<div class="discounted-price">Rp${product.price.toLocaleString('id-ID')}</div>`;
+
+                let imageWrapperHtml = '';
+                if ({{ \App\Models\Setting::get('cashier_enable_product_photos', true) ? 'true' : 'false' }}) {
+                    imageWrapperHtml = `<div class="product-image-wrapper">${imageHtml}</div>`;
+                }
+
+                html += `
+                <div class="product-card ${isOutOfStock ? 'opacity-50' : ''}"
+                    data-product-id="${product.id}" data-category="${product.category_id}"
+                    data-name="${product.name.replace(/"/g, '&quot;')}" data-price="${product.price}"
+                    data-promo-price="${promoPrice}" data-stock="${totalStock}"
+                    data-barcode="${product.barcode || ''}"
+                    data-expiry="${nextExpiry ? nextExpiry.substring(0, 10) : ''}">
+                    ${promoBadgeHtml}
+                    ${expiryBadgeHtml}
+                    ${imageWrapperHtml}
+                    <div class="product-card-body">
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-price">${priceDisplay}</div>
+                        <div class="product-stock ${isOutOfStock ? 'out-of-stock' : ''}">
+                            {{ __('pos.qty') }}: ${totalStock}
+                        </div>
+                        <button class="btn-add-product">
+                            <i class="fas fa-plus me-1"></i> Tambah
+                        </button>
+                    </div>
+                </div>`;
+            });
+
+            grid.innerHTML = html;
+
+            // Reattach event listeners
+            document.querySelectorAll('.product-card').forEach(card => {
+                card.addEventListener('click', () => addToCart(card));
+            });
+        }
+
+        function checkout() {
+            if (cart.length === 0) {
+                showToast('warning', '{{ __('pos.cart_empty') }}');
+                return;
+            }
+
+            if (!selectedPaymentMethod) {
+                showToast('warning', '{{ __('pos.select_payment_method') }}');
+                return;
+            }
+
+            const modalElement = document.getElementById('keypadModal');
+            // Use getOrCreateInstance to prevent multiple instances/backdrops
+            const modal = window.bootstrap.Modal.getOrCreateInstance(modalElement);
+            const isCash = selectedPaymentMethod === 'cash';
+
+            // Get the specific button to check for proof requirement
+            const activeBtn = document.querySelector(`.paymentMethodBtn.active[data-method="${selectedPaymentMethod}"]`);
+            const proofRequirement = activeBtn ? activeBtn.dataset.proofRequirement : 'disabled';
+            const methodName = activeBtn ? activeBtn.innerText.trim() : selectedPaymentMethod;
+
+            // Toggle sections
+            document.getElementById('cashInputSection').style.display = isCash ? 'block' : 'none';
+            document.getElementById('nonCashInputSection').style.display = (proofRequirement !== 'disabled') ? 'block' : 'none';
+
+            // Set modal title based on specific method
+            document.querySelector('.modal-title').textContent = isCash ? '{{ __('pos.cash_amount') }}' : methodName;
+
+            if (isCash) {
+                document.getElementById('keypadDisplay').value = '';
+            } else {
+                // Reset file input
+                resetFileInput();
+            }
+
+            modal.show();
+
+            // Setup confirm button
+            document.getElementById('keypadConfirm').onclick = () => {
+                const itemSubtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
+                const originalSubtotal = cart.reduce((sum, item) => sum + (item.quantity * (item.originalPrice || item.price)), 0);
+
+                // Calculate Manual Discount
+                let manualDiscount = 0;
+                const discountValueInput = document.getElementById('manualDiscountValue');
+                const discountTypeSelect = document.getElementById('discountType');
+
+                if (discountValueInput && discountValueInput.value > 0) {
+                    const value = parseFloat(discountValueInput.value);
+                    if (discountTypeSelect.value === 'percentage') {
+                        manualDiscount = itemSubtotal * (value / 100);
+                    } else {
+                        manualDiscount = value;
+                    }
+                }
+
+                const total = Math.max(0, itemSubtotal - manualDiscount);
+                const totalDiscountAmount = (originalSubtotal - itemSubtotal) + manualDiscount;
+
+                if (isCash) {
+                    const cashAmount = parseFloat(document.getElementById('keypadDisplay').value.replace(/[^0-9]/g, ''));
+                    if (!cashAmount || cashAmount === 0) {
+                        showToast('warning', '{{ __('pos.enter_cash_amount') }}');
+                        return;
+                    }
+                    if (cashAmount < total) {
+                        showToast('error', `{{ __('pos.insufficient_cash') }}Rp${formatCurrency(total - cashAmount)}`);
+                        return;
+                    }
+                    modal.hide();
+                    processCheckout(cart, itemSubtotal, total, cashAmount, null, totalDiscountAmount, originalSubtotal);
+                } else {
+                    const inputCamera = document.getElementById('inputCamera');
+                    const inputGallery = document.getElementById('inputGallery');
+                    let file = null;
+
+                    if (inputCamera.files.length > 0) {
+                        file = inputCamera.files[0];
+                    } else if (inputGallery.files.length > 0) {
+                        file = inputGallery.files[0];
+                    }
+
+                    // Validation for methods requiring proof
+                    if (proofRequirement === 'required' && !file) {
+                        showToast('warning', 'Harap upload bukti pembayaran!');
+                        return;
+                    }
+
+                    modal.hide();
+                    processCheckout(cart, itemSubtotal, total, total, file, totalDiscountAmount, originalSubtotal);
+                }
+            };
+        }
+
+        // File Upload Handlers
+        document.getElementById('btnCamera').addEventListener('click', () => {
+            document.getElementById('inputCamera').click();
+        });
+
+        document.getElementById('btnGallery').addEventListener('click', () => {
+            document.getElementById('inputGallery').click();
+        });
+
+        document.getElementById('removeImageBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            resetFileInput();
+        });
+
+        /**
+         * Client-side image compression using Canvas API.
+         * Resizes large images and compresses to JPEG before upload.
+         * This dramatically reduces upload size and bandwidth usage.
+         */
+        function compressImage(file, maxWidth = 1920, quality = 0.8) {
+            return new Promise((resolve, reject) => {
+                // Skip non-image files
+                if (!file.type.startsWith('image/')) {
+                    resolve(file);
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = new Image();
+                    img.onload = function () {
+                        // Calculate new dimensions maintaining aspect ratio
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > maxWidth) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        }
+
+                        // Draw to canvas
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        // Convert to blob
+                        canvas.toBlob(function (blob) {
+                            if (blob) {
+                                const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), {
+                                    type: 'image/jpeg',
+                                    lastModified: Date.now()
+                                });
+                                const originalKB = (file.size / 1024).toFixed(1);
+                                const compressedKB = (compressedFile.size / 1024).toFixed(1);
+                                console.log(`[ImageCompress] ${originalKB}KB → ${compressedKB}KB (${((1 - compressedFile.size / file.size) * 100).toFixed(0)}% smaller)`);
+                                resolve(compressedFile);
+                            } else {
+                                resolve(file); // fallback to original
+                            }
+                        }, 'image/jpeg', quality);
+                    };
+                    img.onerror = () => resolve(file); // fallback
+                    img.src = e.target.result;
+                };
+                reader.onerror = () => resolve(file); // fallback
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function handleFileSelect(input, otherInputId) {
+            input.addEventListener('change', async function (e) {
+                if (this.files && this.files[0]) {
+                    // Clear the other input
+                    document.getElementById(otherInputId).value = '';
+
+                    // Compress the image before preview and upload
+                    const originalFile = this.files[0];
+                    const compressedFile = await compressImage(originalFile);
+
+                    // Replace the file input's file with the compressed version
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(compressedFile);
+                    this.files = dataTransfer.files;
+
+                    // Show preview
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        document.getElementById('imagePreview').src = e.target.result;
+                        document.getElementById('previewContainer').classList.remove('d-none');
+                        document.getElementById('uploadButtons').classList.add('d-none');
+                    }
+                    reader.readAsDataURL(compressedFile);
+                }
+            });
+        }
+
+        handleFileSelect(document.getElementById('inputCamera'), 'inputGallery');
+        handleFileSelect(document.getElementById('inputGallery'), 'inputCamera');
+
+        function resetFileInput() {
+            document.getElementById('inputCamera').value = '';
+            document.getElementById('inputGallery').value = '';
+            document.getElementById('previewContainer').classList.add('d-none');
+            document.getElementById('uploadButtons').classList.remove('d-none');
+            document.getElementById('imagePreview').src = '';
+        }
+
+        function processCheckout(items, subtotal, total, cashAmount, paymentProofFile, discountAmount = 0, originalSubtotal = 0) {
+            const checkoutBtn = document.getElementById('checkoutBtn');
+            const originalText = checkoutBtn.innerHTML;
+            checkoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> {{ __('pos.processing') }}';
+            checkoutBtn.disabled = true;
+
+            const change = cashAmount - total;
+            const formData = new FormData();
+
+            // Append items
+            items.forEach((item, index) => {
+                formData.append(`items[${index}][product_id]`, item.product_id);
+                formData.append(`items[${index}][quantity]`, item.quantity);
+                formData.append(`items[${index}][price]`, item.price);
+            });
+
+            formData.append('subtotal', originalSubtotal || subtotal);
+            formData.append('total_amount', total);
+            formData.append('payment_method', selectedPaymentMethod);
+            formData.append('cash_amount', cashAmount);
+            formData.append('discount', discountAmount);
+            formData.append('change_amount', change > 0 ? change : 0);
+
+            if (paymentProofFile) {
+                formData.append('payment_proof', paymentProofFile);
+            }
+
+            fetch('{{ route("pos.checkout") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                    // Content-Type not set to let browser set boundary
+                },
+                body: formData
+            })
+                .then(response => response.json())
+                .then(result => {
+                    checkoutBtn.innerHTML = originalText;
+                    checkoutBtn.disabled = false;
+
+                    if (result.success) {
+                        const transaction_id = result.transaction_id || result.transaction?.id;
+                        const change = result.change || 0;
+                        const cashAmount = parseFloat(document.getElementById('keypadDisplay').value.replace(/[^0-9]/g, '')) || 0;
+                        let swalOptions = {
+                            icon: 'success',
+                            title: '{{ __('pos.transaction_success') }}',
+                            confirmButtonText: '{{ __('common.ok') }} & Cetak Struk'
+                        };
+
+                        if (selectedPaymentMethod === 'cash') {
+                            swalOptions.html = `
+                                <div class="text-start mt-3">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>{{ __('pos.cash_received') }}:</span>
+                                        <span class="fw-bold">Rp${formatCurrency(cashAmount)}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between text-success h5 mb-0">
+                                        <span>{{ __('pos.change') }}:</span>
+                                        <span class="fw-bold">Rp${formatCurrency(change)}</span>
+                                    </div>
+                                </div>`;
+                        }
+
+                        Swal.fire({
+                            ...swalOptions,
+                            showCancelButton: true,
+                            cancelButtonText: '{{ __('common.close') }}',
+                            customClass: {
+                                popup: 'artika-swal-popup',
+                                title: 'artika-swal-title',
+                                confirmButton: 'artika-swal-confirm-btn',
+                                cancelButton: 'artika-swal-cancel-btn'
+                            },
+                            buttonsStyling: false
+                        }).then((result_swal) => {
+                            if (result_swal.isConfirmed && transaction_id) {
+                                // Only auto-print if NOT on mobile/tablet (width >= 1024px)
+                                const isMobile = window.innerWidth < 1024;
+                                const printUrl = '{{ url("pos/receipt") }}/' + transaction_id + (isMobile ? '' : '?auto_print=true');
+                                window.open(printUrl, '_blank');
+                            }
+                            // Auto-refresh stock by reloading page
+                            window.location.reload();
+                        });
+
+                        cart = [];
+                        updateCartDisplay();
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: '{{ __('common.error') }}',
+                            text: result.message || '{{ __('pos.transaction_failed') }}'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    checkoutBtn.innerHTML = originalText;
+                    checkoutBtn.disabled = false;
+                    showToast('error', error.message);
+                });
+        }
+
+        function holdTransaction() {
+            if (cart.length === 0) {
+                showToast('warning', 'Keranjang kosong!');
+                return;
+            }
+
+            const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
+            const total = subtotal; // No manual discount for held transactions to keep it simple
+
+            confirmAction({
+                title: '{{ __('pos.hold_transaction') }}',
+                text: '{{ __('pos.hold_transaction_text') }}',
+                confirmButtonText: '{{ __('pos.hold_transaction_confirm') }}'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const btnHold = document.getElementById('btnHold');
+                    const originalText = btnHold.innerHTML;
+                    btnHold.disabled = true;
+                    btnHold.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+                    fetch('{{ route("pos.hold") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            items: cart,
+                            subtotal: subtotal,
+                            total: total,
+                            note: ''
+                        })
+                    })
+                        .then(response => response.json())
+                        .then(result => {
+                            btnHold.disabled = false;
+                            btnHold.innerHTML = originalText;
+                            if (result.success) {
+                                showToast('success', '{{ __("pos.hold_transaction_success") }}');
+                                cart = [];
+                                updateCartDisplay();
+                            } else {
+                                showToast('error', 'Gagal menunda transaksi: ' + result.message);
+                            }
+                        })
+                        .catch(err => {
+                            btnHold.disabled = false;
+                            btnHold.innerHTML = originalText;
+                            showToast('error', 'Terjadi kesalahan sistem');
+                        });
+                }
+            });
+        }
+
+        function openHeldModal() {
+            const modalElement = document.getElementById('heldTransactionsModal');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+            modal.show();
+
+            const tableBody = document.getElementById('heldTransactionsTableBody');
+            tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4"><i class="fas fa-spinner fa-spin me-2"></i> Memuat data...</td></tr>';
+
+            fetch('{{ route("pos.held.index") }}', {
+                headers: { 'Accept': 'application/json' }
+            })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success && result.data.length > 0) {
+                        let html = '';
+                        result.data.forEach(held => {
+                            const date = new Date(held.created_at).toLocaleString('id-ID');
+                            const itemCount = held.items.length;
+                            html += `
+                                <tr>
+                                    <td class="ps-3 small">${date}</td>
+                                    <td>${itemCount} item</td>
+                                    <td class="text-end fw-bold">Rp${formatCurrency(held.total)}</td>
+                                    <td class="text-center pe-3">
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-success" onclick="resumeHeldTransaction(${held.id})" title="Panggil Kembali">
+                                                <i class="fas fa-undo"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" onclick="deleteHeldTransaction(${held.id})" title="Hapus">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        tableBody.innerHTML = html;
+                    } else {
+                        tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">Tidak ada transaksi tertunda.</td></tr>';
+                    }
+                })
+                .catch(err => {
+                    tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-danger">Gagal memuat data.</td></tr>';
+                });
+        }
+
+        function resumeHeldTransaction(id) {
+            if (cart.length > 0) {
+                confirmAction({
+                    title: 'Timpa Keranjang?',
+                    text: 'Keranjang saat ini akan dihapus dan diganti dengan transaksi yang dipilih.',
+                    confirmButtonText: 'Ya, Timpa'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        performResume(id);
+                    }
+                });
+            } else {
+                performResume(id);
+            }
+        }
+
+        function performResume(id) {
+            fetch('{{ url("pos/held") }}/' + id + '/resume', {
+                headers: { 'Accept': 'application/json' }
+            })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        // Ensure all numeric fields are actually numbers to avoid string concatenation in calculations
+                        cart = result.data.items.map(item => ({
+                            ...item,
+                            price: parseFloat(item.price),
+                            quantity: parseInt(item.quantity),
+                            subtotal: parseFloat(item.subtotal),
+                            stock: parseInt(item.stock || 0)
+                        }));
+
+                        updateCartDisplay();
+
+                        const modalElement = document.getElementById('heldTransactionsModal');
+                        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                        if (modalInstance) {
+                            modalInstance.hide();
+                        }
+                        showToast('success', 'Transaksi dipanggil kembali');
+                    } else {
+                        showToast('error', 'Gagal memanggil transaksi: ' + result.message);
+                    }
+                })
+                .catch(err => showToast('error', 'Terjadi kesalahan sistem'));
+        }
+
+        function deleteHeldTransaction(id) {
+            confirmAction({
+                title: 'Hapus Transaksi?',
+                text: 'Transaksi tertunda ini akan dihapus permanen.',
+                confirmButtonText: 'Ya, Hapus'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch('{{ url("pos/held") }}/' + id, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            'Accept': 'application/json'
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(result => {
+                            if (result.success) {
+                                openHeldModal();
+                                showToast('success', 'Transaksi dihapus');
+                            } else {
+                                showToast('error', 'Gagal menghapus');
+                            }
+                        })
+                        .catch(err => showToast('error', 'Terjadi kesalahan sistem'));
+                }
+            });
+        }
+
+        function initializeKeypad() {
+            const display = document.getElementById('keypadDisplay');
+            const keypadBtns = document.querySelectorAll('.keypad-btn[data-key]');
+            const deleteBtn = document.getElementById('keypadDelete');
+
+            console.log('Keypad Init:', { display: !!display, buttons: keypadBtns.length, deleteBtn: !!deleteBtn });
+
+            if (!display) return;
+
+            // 1. Centralized Formatting Helper (Now accessible in whole function scope)
+            const updateFormattedValue = (inputEl, newValue) => {
+                if (!inputEl) return;
+                let numeric = (newValue || '').toString().replace(/[^0-9]/g, '');
+                if (!numeric || numeric === '0') {
+                    inputEl.value = '';
+                    return;
+                }
+                const parsed = parseInt(numeric);
+                inputEl.value = 'Rp' + parsed.toLocaleString('id-ID');
+            };
+
+            // 2. Button Press Handler
+            const handleKeypadPress = (e, key, isDelete = false) => {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+
+                let currentNumeric = display.value.replace(/[^0-9]/g, '');
+                if (isDelete) {
+                    updateFormattedValue(display, currentNumeric.slice(0, -1));
+                } else {
+                    updateFormattedValue(display, currentNumeric + key);
+                }
+
+                // Keep focus and trigger input event for any other listeners
+                display.dispatchEvent(new Event('input'));
+                setTimeout(() => display.focus(), 5);
+            };
+
+            // 3. Attach Listeners to Buttons
+            keypadBtns.forEach(btn => {
+                ['mousedown', 'touchstart'].forEach(type => {
+                    btn.addEventListener(type, (e) => handleKeypadPress(e, btn.dataset.key), { passive: false });
+                });
+            });
+
+            if (deleteBtn) {
+                ['mousedown', 'touchstart'].forEach(type => {
+                    deleteBtn.addEventListener(type, (e) => handleKeypadPress(e, null, true), { passive: false });
+                });
+            }
+
+            // 4. Input Field Specifics
+            display.addEventListener('input', function () {
+                let cursor = this.selectionStart;
+                let oldLen = this.value.length;
+                updateFormattedValue(this, this.value);
+                let newLen = this.value.length;
+                this.setSelectionRange(cursor + (newLen - oldLen), cursor + (newLen - oldLen));
+            });
+
+            display.addEventListener('focus', function () {
+                if (window.innerWidth < 1024) {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    document.body.classList.add('keyboard-active');
+                    const modalDialog = document.querySelector('#keypadModal .modal-dialog');
+                    if (modalDialog) {
+                        modalDialog.style.marginTop = '2rem';
+                        modalDialog.style.transition = 'margin-top 0.3s ease';
+                    }
+                }
+            });
+
+            display.addEventListener('blur', function () {
+                document.body.classList.remove('keyboard-active');
+                const modalDialog = document.querySelector('#keypadModal .modal-dialog');
+                if (modalDialog) {
+                    modalDialog.style.marginTop = '0.5rem';
+                }
+            });
+
+            display.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const confirmBtn = document.getElementById('keypadConfirm');
+                    if (confirmBtn) confirmBtn.click();
+                }
+            });
+
+            display.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+                const numericOnly = pastedText.replace(/[^0-9]/g, '');
+                if (numericOnly) {
+                    updateFormattedValue(display, display.value + numericOnly);
+                }
+            });
+
+            console.log('Keypad initialized successfully');
+        }
+
+
+        function formatCurrency(value) {
+            return Math.round(value).toLocaleString('id-ID');
+        }
+
+        // SCANNER STATE
+        let lastScannedBarcode = '';
+        let lastScanTime = 0;
+        const SCAN_COOLDOWN = 2500;
+
+        // Professional Scanner Beep using Web Audio API
+        function playBeep() {
+            try {
+                // Ensure focus returns after interaction
+                setTimeout(refocusBarcode, 100);
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime);
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.2);
+
+                oscillator.start(audioCtx.currentTime);
+                oscillator.stop(audioCtx.currentTime + 0.2);
+            } catch (e) {
+                console.warn('Audio feedback failed:', e);
+            }
+        }
+
+        function playErrorBeep() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.3);
+
+                oscillator.start(audioCtx.currentTime);
+                oscillator.stop(audioCtx.currentTime + 0.3);
+
+                // Add a second low tone for "buzz" effect
+                const osc2 = audioCtx.createOscillator();
+                osc2.type = 'sawtooth';
+                osc2.frequency.setValueAtTime(100, audioCtx.currentTime);
+                osc2.connect(gainNode);
+                osc2.start(audioCtx.currentTime);
+                osc2.stop(audioCtx.currentTime + 0.3);
+            } catch (e) {
+                console.warn('Audio feedback failed:', e);
+            }
+        }
+
+        // SCANNER FUNCTIONS
+        let isScannerStarting = false;
+
+        function openScanner() {
+            if (isScannerStarting) return;
+            const scannerSection = document.getElementById('scannerSection');
+            const loadingOverlay = document.getElementById('scannerLoading');
+            const readerDiv = document.getElementById('reader');
+
+            if (scannerSection) scannerSection.classList.add('active');
+            if (loadingOverlay) loadingOverlay.style.display = 'block';
+            if (readerDiv) readerDiv.style.opacity = '0'; // Hide reader until ready
+
+            if (!scanner) {
+                isScannerStarting = true;
+                scanner = new Html5Qrcode("reader");
+
+                // Optimized constraints for faster startup on mobile
+                const videoConstraints = {
+                    facingMode: "environment",
+                    // Use slightly lower resolution for faster initialization if needed,
+                    // but stay within acceptable range for barcode scanning.
+                    width: { min: 640, ideal: 1280 },
+                    height: { min: 480, ideal: 720 },
+                };
+
+                const config = {
+                    fps: 15, // Reduced from 20 for better mobile performance
+                    qrbox: (viewWidth, viewHeight) => {
+                        const minDim = Math.min(viewWidth, viewHeight);
+                        const boxSize = Math.floor(minDim * 0.7);
+                        return { width: boxSize, height: boxSize };
+                    },
+                    aspectRatio: 1.0,
+                    videoConstraints: {
+                        ...videoConstraints,
+                        advanced: [{ focusMode: "continuous" }]
+                    }
+                };
+
+                scanner.start(
+                    videoConstraints,
+                    config,
+                    onScanSuccess,
+                    onScanFailure
+                ).then(() => {
+                    isScannerStarting = false;
+                    if (loadingOverlay) loadingOverlay.style.display = 'none';
+                    if (readerDiv) readerDiv.style.opacity = '1';
+                    console.log("[Scanner] Started successfully");
+                }).catch(err => {
+                    console.error("Camera error:", err);
+                    isScannerStarting = false;
+                    if (loadingOverlay) loadingOverlay.style.display = 'none';
+
+                    // Fallback to basic start
+                    scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, onScanSuccess, onScanFailure)
+                        .then(() => {
+                            if (readerDiv) readerDiv.style.opacity = '1';
+                        });
+                });
+            } else {
+                // If scanner existed, just make sure UI is correct
+                if (loadingOverlay) loadingOverlay.style.display = 'none';
+                if (readerDiv) readerDiv.style.opacity = '1';
+            }
+        }
+
+        function closeScanner() {
+            const scannerSection = document.getElementById('scannerSection');
+            scannerSection.classList.remove('active');
+
+            if (scanner) {
+                const s = scanner;
+                scanner = null; // Prevent race conditions
+                s.stop().catch(err => console.log("Stop scanner error:", err));
+            }
+        }
+
+        // Handle Orientation Change / Resize for Scanner
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                const scannerSection = document.getElementById('scannerSection');
+                if (scannerSection && scannerSection.classList.contains('active')) {
+                    console.log('[Scanner] Orientation/Resize detected, restarting scanner...');
+                    // Restart scanner to pick up new aspect ratio
+                    closeScanner();
+                    setTimeout(openScanner, 300); // Give it a moment to clear
+                }
+            }, 500);
+        });
+
+        function onScanSuccess(decodedText, decodedResult) {
+            const currentTime = Date.now();
+
+            // Prevent spamming
+            if (decodedText === lastScannedBarcode && (currentTime - lastScanTime) < SCAN_COOLDOWN) {
+                return;
+            }
+
+            lastScannedBarcode = decodedText;
+            lastScanTime = currentTime;
+
+            const product = document.querySelector(`[data-product-id="${decodedText}"]`) ||
+                document.querySelector(`[data-barcode="${decodedText}"]`);
+
+            if (product) {
+                addToCart(product);
+                playBeep();
+                showToast('success', '✓ ' + product.dataset.name);
+                console.log('Scanned:', decodedText);
+            } else {
+                // Try to find by barcode in data attribute
+                const allProducts = document.querySelectorAll('.product-card');
+                for (let prod of allProducts) {
+                    if (prod.dataset.productId === decodedText || prod.dataset.barcode === decodedText) {
+                        addToCart(prod);
+                        playBeep();
+                        showToast('success', '✓ ' + prod.dataset.name);
+                        return;
+                    }
+                }
+                playErrorBeep();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Barcode Tidak Dikenal',
+                    text: 'ID/Barcode: ' + decodedText + ' tidak terdaftar.',
+                    timer: 1500,
+                    showConfirmButton: false,
+                    customClass: {
+                        popup: 'artika-swal-popup',
+                        title: 'artika-swal-title'
+                    }
+                });
+            }
+        }
+
+        function onScanFailure(error) {
+            // Suppress error logs for failed reads
+        }
+
+        // Handle logout confirmation
+        const btnLogout = document.getElementById('btnLogout');
+        if (btnLogout) {
+            btnLogout.addEventListener('click', function () {
+                confirmAction({
+                    text: "{{ __('pos.logout_confirmation_message') }}",
+                    confirmButtonText: "{{ __('pos.logout') }}",
+                    icon: 'question'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        document.getElementById('logoutForm').submit();
+                    }
+                });
+            });
+        }
+
+        // Global Numeric Input Validation for POS
+        document.addEventListener('keydown', function (e) {
+            if (e.target.id === 'keypadDisplay') return; // Skip for formatted payment input
+            if (e.target.tagName === 'INPUT' && (e.target.type === 'number' || e.target.inputMode === 'numeric')) {
+                // Block 'e', 'E', '-', '+', '.', ','
+                const blockedKeys = ['e', 'E', '-', '+', '.', ','];
+                if (blockedKeys.includes(e.key)) {
+                    e.preventDefault();
+                }
+            }
+        });
+
+        // Strict input sanitization (handles copy-paste & mobile keyboards)
+        document.addEventListener('input', function (e) {
+            const target = e.target;
+            if (target.id === 'keypadDisplay') return; // Skip for formatted payment input
+            if (target.tagName === 'INPUT' && (target.type === 'number' || target.inputMode === 'numeric')) {
+                // Remove any non-numeric characters immediately
+                const val = target.value;
+                if (/[^0-9]/.test(val)) {
+                    target.value = val.replace(/[^0-9]/g, '');
+                }
+            }
+        });
+
+        // Prevent paste of non-numeric characters for POS
+        document.addEventListener('paste', function (e) {
+            if (e.target.id === 'keypadDisplay') return; // Skip for formatted payment input
+            if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
+                const pasteData = (e.clipboardData || window.clipboardData).getData('text');
+                if (!/^\d+$/.test(pasteData)) {
+                    e.preventDefault();
+                    if (typeof showToast === 'function') {
+                        showToast('warning', 'Hanya angka bulat yang diperbolehkan');
+                    }
+                }
+            }
+        });
+        // BARCODE FOCUS MANAGEMENT
+        // Create a global reference immediately
+        window.refocusBarcode = function () {
+            const input = document.getElementById('barcodeScannerInput');
+            if (!input) return;
+
+            // Only focus if no other input is active and offline scanner is closed
+            const scannerSection = document.getElementById('scannerSection');
+            const isScannerActive = scannerSection && scannerSection.classList.contains('active');
+
+            if (!isScannerActive) {
+                // Don't steal focus if any modal is open
+                if (document.querySelector('.modal.show')) return;
+
+                // Don't steal focus if SweetAlert is visible (it usually has its own focus)
+                if (Swal.isVisible()) return;
+
+                // Don't steal focus if user is typing in ANY other input field
+                const active = document.activeElement;
+                if (active && active !== input && (
+                    active.tagName === 'INPUT' ||
+                    active.tagName === 'TEXTAREA' ||
+                    active.tagName === 'SELECT' ||
+                    active.isContentEditable ||
+                    active.id === 'keypadDisplay'
+                )) {
+                    return;
+                }
+
+                // Focus it! We removed isTouchDevice check because we use inputmode="none"
+                if (active !== input) {
+                    input.focus();
+                }
+            }
+        };
+
+        // Compatibility legacy declaration
+        function refocusBarcode() { window.refocusBarcode(); }
+
+        // Auto-focus on load
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(refocusBarcode, 200);
+            setTimeout(refocusBarcode, 800); // Second attempt to be sure
+        });
+
+        // Final fallback focus
+        window.onload = () => setTimeout(refocusBarcode, 100);
+
+        // Refocus after SweetAlert closes
+        const originalFire = Swal.fire;
+        Swal.fire = function () {
+            return originalFire.apply(this, arguments).then((result) => {
+                setTimeout(refocusBarcode, 300);
+                return result;
+            });
+        };
+
+        // Refocus after Bootstrap Modals close
+        document.addEventListener('hidden.bs.modal', function () {
+            setTimeout(refocusBarcode, 300);
+        });
+
+        // Refocus after any click that isn't an input
+        document.addEventListener('click', function (e) {
+            if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A') {
+                refocusBarcode();
+            }
+        });
+
+        // Refocus after adding product
+        const originalAddToCart = window.addToCart;
+        if (typeof originalAddToCart === 'function') {
+            window.addToCart = function () {
+                const result = originalAddToCart.apply(this, arguments);
+                setTimeout(refocusBarcode, 100);
+                return result;
+            };
+        }
+    </script>
+
+    <!-- SCANNER (Global Overlay) -->
+    <div class="scanner-section" id="scannerSection">
+        <div class="scanner-header">
+            <span class="scanner-title"><i class="fas fa-barcode"></i> {{ __('pos.scanner_title') }}</span>
+        </div>
+        <div id="reader"></div>
+        <div class="scanner-loading" id="scannerLoading">
+            <div class="loading-spinner"></div>
+            <div>{{ __('pos.starting_camera') }}</div>
+        </div>
+        <div class="scanner-footer">
+            <button class="btn-toggle-scanner" id="closeScannerBtn">{{ __('common.close') }}</button>
+        </div>
+    </div>
+
+    <form id="logoutForm" action="{{ route('logout') }}" method="POST" style="display: none;">
+        @csrf
+    </form>
+
+    {{-- Theme Toggle Script --}}
+    <script>
+        (function () {
+            const opts = document.querySelectorAll('.pos-theme-opt');
+            const htmlEl = document.documentElement;
+
+            function getEffective(pref) {
+                return pref === 'system'
+                    ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+                    : pref;
+            }
+
+            function apply(pref) {
+                htmlEl.setAttribute('data-bs-theme', getEffective(pref));
+                localStorage.setItem('artika-theme', pref);
+
+                const icons = { light: 'fa-sun', dark: 'fa-moon', system: 'fa-desktop' };
+                const icon = document.getElementById('posThemeIcon');
+
+                if (icon) {
+                    icon.className = 'fa-solid ' + (icons[pref] || 'fa-sun');
+                }
+
+                opts.forEach(o => {
+                    const chk = o.querySelector('.pos-theme-check');
+                    if (o.dataset.theme === pref) {
+                        o.classList.add('active');
+                        chk?.classList.remove('d-none');
+                    } else {
+                        o.classList.remove('active');
+                        chk?.classList.add('d-none');
+                    }
+                });
+            }
+
+            apply(localStorage.getItem('artika-theme') || 'system');
+            opts.forEach(o => o.addEventListener('click', () => apply(o.dataset.theme)));
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+                if (localStorage.getItem('artika-theme') === 'system') apply('system');
+            });
+        })();
+    </script>
+
+    {{-- PWA Service Worker Registration --}}
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('SW registered:', reg.scope))
+                    .catch(err => console.log('SW registration failed:', err));
+            });
+        }
+    </script>
+</body>
+
+</html>

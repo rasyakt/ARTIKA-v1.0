@@ -1,0 +1,347 @@
+// ============================================
+// ARTIKA POS - Main Stylesheet
+// ============================================
+
+// Google Fonts
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+// Variables (must be imported before Bootstrap)
+@import 'variables';
+
+// Bootstrap with custom variables
+@import 'bootstrap/scss/bootstrap';
+
+// Password Toggle Styles
+@import 'password-toggle';
+
+// Custom Components
+@import 'components';
+
+/* Expose theme colors as CSS custom properties for runtime use */
+:root {
+    /* Brown Palette */
+    --brown-50: #{$brown-50};
+    --brown-100: #{$brown-100};
+    --brown-200: #{$brown-200};
+    --brown-300: #{$brown-300};
+    --brown-400: #{$brown-400};
+    --brown-500: #{$brown-500};
+    --brown-600: #{$brown-600};
+    --brown-700: #{$brown-700};
+    --brown-800: #{$brown-800};
+    --brown-900: #{$brown-900};
+    --card-bg: #{$card-bg};
+
+    /* Primary Brand */
+    --color-primary: #{$primary};
+    --color-primary-dark: #{$primary-dark};
+    --color-primary-light: #{$primary-light};
+    --color-primary-lighter: #{$primary-lighter};
+
+    /* Secondary */
+    --color-secondary: #{$secondary};
+    --color-secondary-dark: #{$secondary-dark};
+    --color-secondary-light: #{$secondary-light};
+
+    /* Accent */
+    --color-accent-warm: var(--color-primary);
+    --color-accent-gold: #{$accent-gold};
+    --color-cream: #{$accent-cream};
+
+    /* Neutral */
+    --color-white: #{$white};
+    --color-bg: #{$gray-50};
+    --color-text: #{$gray-800};
+    --gray-50: #{$gray-50};
+    --gray-100: #{$gray-100};
+    --gray-200: #{$gray-200};
+    --gray-300: #{$gray-300};
+    --gray-400: #{$gray-400};
+    --gray-500: #{$gray-500};
+    --gray-600: #{$gray-600};
+    --gray-700: #{$gray-700};
+    --gray-800: #{$gray-800};
+    --gray-900: #{$gray-900};
+
+    /* Semantic - Success */
+    --color-success: #{$success};
+    --color-success-light: #{$success-light};
+    --color-success-dark: #{$success-dark};
+
+    /* Semantic - Warning */
+    --color-warning: #{$warning};
+    --color-warning-light: #{$warning-light};
+    --color-warning-dark: #{$warning-dark};
+
+    /* Semantic - Danger */
+    --color-danger: #{$danger};
+    --color-danger-light: #{$danger-light};
+    --color-danger-dark: #{$danger-dark};
+
+    /* Semantic - Info */
+    --color-info: #{$info};
+    --color-info-light: #{$info-light};
+    --color-info-dark: #{$info-dark};
+
+    /* Gradients */
+    --gradient-primary: var(--color-primary-dark);
+    --gradient-warm: var(--color-primary);
+
+    /* Radius */
+    --radius-sm: #{$radius-sm};
+    --radius-md: #{$radius-md};
+    --radius-lg: #{$radius-lg};
+    --radius-xl: #{$radius-xl};
+}
+
+/* Dark theme overrides — activated by data-bs-theme="dark" on <html> */
+[data-bs-theme="dark"] {
+    /* Brown Palette (darkened surfaces, lightened text tones) */
+    --brown-50: #2d2520;
+    --brown-100: #3a302a;
+    --brown-200: #4a3d35;
+    --brown-300: #5c4d42;
+    --brown-400: #7a6858;
+    --brown-500: #9a8474;
+    --brown-600: #b49e8e;
+    --brown-700: #c8b4a4;
+    --brown-800: #daccbf;
+    --brown-900: #ece2d8;
+    --card-bg: #2a2a2a;
+
+    /* Primary Brand (adjusted for dark mode, keeping the brown identity) */
+    --color-primary: #a18072;       /* Medium brown */
+    --color-primary-dark: #85695a;  /* Original primary (Darker) */
+    --color-primary-light: #b49e8e; /* Light brown / Tan */
+    --color-primary-lighter: #c8b4a4; /* Very light tan */
+
+    /* Secondary */
+    --color-secondary: #5c4d42;
+    --color-secondary-dark: #4a3d35;
+    --color-secondary-light: #3a302a;
+
+    /* Accent */
+    --color-accent-warm: #d4976e;
+    --color-accent-gold: #e0b88a;
+    --color-cream: #3a302a;
+
+    /* Neutral (inverted) */
+    --color-white: #1e1e1e;
+    --color-bg: #121212;
+    --color-text: #e7e5e4;
+    --gray-50: #1e1e1e;
+    --gray-100: #2a2a2a;
+    --gray-200: #3a3a3a;
+    --gray-300: #4a4a4a;
+    --gray-400: #6a6a6a;
+    --gray-500: #8a8a8a;
+    --gray-600: #a8a8a8;
+    --gray-700: #c8c8c8;
+    --gray-800: #e0e0e0;
+    --gray-900: #f0f0f0;
+
+    /* Semantic - Success (brighter for dark bg) */
+    --color-success: #4ade80;
+    --color-success-light: #14532d;
+    --color-success-dark: #86efac;
+
+    /* Semantic - Warning */
+    --color-warning: #fb923c;
+    --color-warning-light: #7c2d12;
+    --color-warning-dark: #fdba74;
+
+    /* Semantic - Danger */
+    --color-danger: #f87171;
+    --color-danger-light: #7f1d1d;
+    --color-danger-dark: #fca5a5;
+
+    /* Semantic - Info */
+    --color-info: #38bdf8;
+    --color-info-light: #0c4a6e;
+    --color-info-dark: #7dd3fc;
+
+    /* Gradients */
+    --gradient-primary: var(--color-primary-dark);
+    --gradient-warm: var(--color-primary);
+
+    color-scheme: dark;
+}
+
+// ============================================
+// Global Styles
+// ============================================
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: $font-family-sans;
+    background: $gray-50;
+    color: $gray-800;
+    line-height: $line-height-normal;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+// (Bootstrap primary is defined in _variables.scss)
+
+// ============================================
+// Utility Classes
+// ============================================
+
+.h-60px {
+    height: 60px;
+}
+
+.h-100vh {
+    height: 100vh;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.transition-all {
+    transition: all $transition-base;
+}
+
+// ============================================
+// Custom Scrollbar for specific elements
+// ============================================
+
+.custom-scroll {
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: $gray-100;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: var(--color-primary-light);
+        border-radius: $radius-full;
+
+        &:hover {
+            background: var(--color-primary);
+        }
+    }
+}
+
+// ============================================
+// Bootstrap Primary Color Runtime Overrides
+// These ensure Bootstrap components follow
+// the runtime palette instead of baked SCSS
+// ============================================
+
+// Links
+a {
+    color: var(--color-primary);
+    &:hover {
+        color: var(--color-primary-dark);
+    }
+}
+
+// Checkboxes & Radios
+.form-check-input:checked {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.form-check-input:focus {
+    border-color: var(--color-primary-light);
+    box-shadow: 0 0 0 0.25rem rgba(133, 105, 90, 0.15);
+}
+
+// Switch
+.form-switch .form-check-input:checked {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+// Focus ring for inputs (Bootstrap uses --bs-focus-ring-color)
+:root {
+    --bs-link-color-rgb: 133, 105, 90;
+    --bs-link-hover-color-rgb: 111, 88, 73;
+}
+
+// Nav pills (common in tabs)
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link {
+    background-color: var(--color-primary-dark) !important;
+    color: white !important;
+}
+
+// Nav tabs
+.nav-tabs .nav-link.active {
+    color: var(--color-primary-dark);
+    border-bottom-color: var(--color-primary-dark);
+}
+
+.nav-tabs .nav-link:hover {
+    color: var(--color-primary);
+}
+
+// Progress bar
+.progress-bar {
+    background-color: var(--color-primary);
+}
+
+// List group active
+.list-group-item.active {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+// Page links (pagination)
+.page-link {
+    color: var(--color-primary);
+    &:hover {
+        color: var(--color-primary-dark);
+    }
+}
+
+.page-item.active .page-link {
+    background-color: var(--color-primary-dark);
+    border-color: var(--color-primary-dark);
+}
+
+// Accordion
+.accordion-button:not(.collapsed) {
+    color: var(--color-primary-dark);
+    background-color: var(--brown-50);
+}
+
+// Breadcrumb active
+.breadcrumb-item.active {
+    color: var(--color-primary);
+}
+
+.breadcrumb-item a {
+    color: var(--color-primary);
+    &:hover {
+        color: var(--color-primary-dark);
+    }
+}
+
+// Table active row
+.table-active {
+    --bs-table-bg-state: var(--brown-50);
+}
+
+// Bootstrap's btn-link
+.btn-link {
+    color: var(--color-primary);
+    &:hover {
+        color: var(--color-primary-dark);
+    }
+}
+
+// Dropdown active
+.dropdown-item.active,
+.dropdown-item:active {
+    background-color: var(--color-primary);
+}

@@ -1,0 +1,314 @@
+@extends('layouts.app')
+
+@section('content')
+	<style>
+		.page-header {
+			display: flex;
+			gap: 1rem;
+			align-items: center;
+			justify-content: space-between;
+			margin-bottom: 1rem;
+		}
+
+		.search-filter {
+			display: flex;
+			gap: 0.75rem;
+			align-items: center;
+		}
+
+		.search-input {
+			min-width: 260px;
+			border-radius: 12px;
+			padding: 0.5rem 0.75rem;
+			border: 1px solid var(--brown-200);
+		}
+
+		.category-select {
+			min-width: 200px;
+			border-radius: 12px;
+		}
+
+		.card-table {
+			border-radius: 16px;
+			overflow: hidden;
+		}
+
+		.product-badge {
+			width: 48px;
+			height: 48px;
+			border-radius: 10px;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			background: var(--brown-100);
+			color: var(--color-primary-dark);
+		}
+
+		.action-btn {
+			border-radius: 8px;
+			padding: 0.35rem 0.6rem;
+		}
+
+		.table-responsive {
+			overflow-x: auto;
+		}
+
+		@media (max-width:768px) {
+			.search-input {
+				min-width: 140px;
+			}
+
+			.category-select {
+				min-width: 140px;
+			}
+
+			.page-header {
+				flex-direction: column;
+				align-items: flex-start;
+				gap: 0.75rem;
+			}
+		}
+	</style>
+
+	<div class="container-fluid py-4">
+		<div class="page-header">
+			<div>
+				<h2 class="fw-bold mb-1" style="color: var(--color-primary-dark);"><i
+						class="fa-solid fa-box me-2"></i>{{ __('admin.product_management') }}</h2>
+				<!-- <p class="text-muted mb-0">{{ __('admin.product_management_subtitle') }}</p> -->
+			</div>
+
+			<div class="d-flex align-items-center">
+				<form action="{{ route('admin.products') }}" method="GET" class="search-filter me-3">
+					<div class="position-relative d-flex align-items-center">
+						<i class="fa-solid fa-magnifying-glass position-absolute"
+							style="left: 1rem; top: 50%; transform: translateY(-50%); opacity: 0.5;"></i>
+						<input name="search" id="searchInput" class="search-input ps-5" type="text"
+							placeholder="{{ __('common.search_placeholder') }}" value="{{ request('search') }}"
+							style="border-radius: {{ App\Models\Setting::get('admin_enable_camera', true) ? '12px 0 0 12px' : '12px' }}; {{ App\Models\Setting::get('admin_enable_camera', true) ? 'border-right: none;' : '' }}">
+						@if(App\Models\Setting::get('admin_enable_camera', true))
+							<button class="btn btn-outline-secondary" type="button" id="btnScanner"
+								style="border: 1px solid var(--brown-200); border-left: none; border-radius: 0 12px 12px 0; background: #fff; color: var(--color-primary-dark); padding: 0.5rem 0.75rem;">
+								<i class="fa-solid fa-camera"></i>
+							</button>
+						@endif
+					</div>
+					<select name="category_id" class="form-select category-select" onchange="this.form.submit()">
+						<option value="">{{ __('common.all_categories') }}</option>
+						@foreach($categories as $cat)
+							<option value="{{ $cat->id }}" {{ request('category_id') == $cat->id ? 'selected' : '' }}>
+								{{ $cat->name }}
+							</option>
+						@endforeach
+					</select>
+				</form>
+
+				<div class="d-flex align-items-center gap-2">
+					<button class="btn btn-outline-primary shadow-sm d-inline-flex align-items-center"
+						data-bs-toggle="modal" data-bs-target="#excelImportModal"
+						style="border-radius: 12px; padding: 0.6rem 1rem; font-weight: 600; height: fit-content; border: 1px solid var(--color-primary);">
+						<i class="fa-solid fa-file-import me-2"></i> Import
+					</button>
+					<a href="{{ route('admin.products.create') }}"
+						class="btn btn-primary shadow-sm d-inline-flex align-items-center"
+						style="background: var(--color-primary-dark); border:none; border-radius:12px; padding:0.6rem 1rem; font-weight: 600; height: fit-content;">
+						<i class="fa-solid fa-plus me-1"></i> {{ __('admin.add_product') }}
+					</a>
+				</div>
+			</div>
+		</div>
+
+
+		<div class="card card-table shadow-sm">
+			<div class="card-body p-0">
+				<div class="table-responsive">
+					<table class="table table-hover align-middle mb-0">
+						<thead style="background: var(--brown-100);">
+							<tr>
+								<th class="ps-4 border-0 fw-semibold" style="color:var(--color-primary-dark);">
+									{{ __('common.product') }}
+								</th>
+								<th class="border-0 fw-semibold" style="color:var(--color-primary-dark);">
+									{{ __('common.category') }}
+								</th>
+								<th class="border-0 fw-semibold" style="color:var(--color-primary-dark);">
+									{{ __('common.barcode') }}
+								</th>
+								<th class="border-0 fw-semibold" style="color:var(--color-primary-dark);">
+									{{ __('common.cost_price') }}
+								</th>
+								<th class="border-0 fw-semibold" style="color:var(--color-primary-dark);">
+									{{ __('common.sell_price') }}
+								</th>
+								<th class="border-0 fw-semibold" style="color:var(--color-primary-dark);">
+									{{ __('common.margin') }}
+								</th>
+								<th class="border-0 fw-semibold" style="color:var(--color-primary-dark);">
+									{{ __('common.stock') }}
+								</th>
+								<th class="border-0 fw-semibold text-center" style="color:var(--color-primary-dark);">
+									{{ __('common.actions') }}
+								</th>
+							</tr>
+						</thead>
+						<tbody id="productsTableBody">
+							@forelse($products as $product)
+								@php
+									$totalStock = $product->stocks->sum('quantity');
+									$margin = $product->cost_price > 0 ? (($product->price - $product->cost_price) / $product->cost_price) * 100 : 0;
+								@endphp
+								<tr data-name="{{ strtolower($product->name) }}" data-barcode="{{ $product->barcode }}"
+									data-category="{{ $product->category->name ?? '' }}">
+									<td class="ps-4">
+										<div class="d-flex align-items-center">
+											<div class="me-3 product-badge" style="{{ $product->image && file_exists(public_path($product->image)) ? 'background: transparent;' : '' }}">
+                                                @if($product->image && file_exists(public_path($product->image)))
+                                                    <img src="{{ asset($product->image) }}" alt="{{ $product->name }}" style="width: 100%; height: 100%; object-fit: contain; border-radius: 10px;">
+                                                @else
+												    <i class="fa-solid fa-box"></i>
+                                                @endif
+											</div>
+											<div>
+												<div class="fw-bold" style="color:var(--color-primary-dark);">
+													{{ $product->name }}
+												</div>
+												<small class="text-muted">ID: {{ $product->id }}</small>
+											</div>
+										</div>
+									</td>
+									<td>
+										<span class="badge"
+											style="background:var(--brown-200); color:var(--color-primary-dark); padding:0.4rem 0.6rem; border-radius:8px;">{{ $product->category->name ?? '-' }}</span>
+									</td>
+									<td>
+										<code
+											style="background:var(--brown-50); padding:0.25rem 0.5rem; border-radius:6px; color:var(--color-primary-dark);">{{ $product->barcode }}</code>
+									</td>
+									<td class="text-muted">Rp {{ number_format($product->cost_price, 0, ',', '.') }}</td>
+									<td class="fw-bold" style="color:var(--color-accent-warm);">Rp
+										{{ number_format($product->price, 0, ',', '.') }}
+									</td>
+									<td>
+										<span
+											class="badge {{ $margin > 30 ? 'bg-success' : ($margin > 15 ? 'bg-warning' : 'bg-danger') }}">{{ number_format($margin, 1) }}%</span>
+									</td>
+									<td>
+										<span
+											class="badge {{ $totalStock > 50 ? 'bg-success' : ($totalStock > 20 ? 'bg-warning' : 'bg-danger') }}">{{ $totalStock }}
+											{{ __('common.units') }}</span>
+									</td>
+									<td class="text-center">
+										<div class="btn-group">
+											<button class="btn btn-sm btn-light action-btn" data-bs-toggle="dropdown"
+												data-bs-boundary="viewport" aria-expanded="false">
+												<i class="fa-solid fa-ellipsis-vertical"></i>
+											</button>
+											<ul class="dropdown-menu dropdown-menu-end" style="border-radius:12px;">
+												<li>
+													<a class="dropdown-item"
+														href="{{ route('admin.products.edit', $product->id) }}"><i
+															class="fa-solid fa-pen me-2"></i>{{ __('common.edit') }}</a>
+												</li>
+												<li>
+													<hr class="dropdown-divider">
+												</li>
+												<li>
+													<form action="{{ route('admin.products.delete', $product->id) }}"
+														method="POST" class="delete-form">
+														@csrf
+														@method('DELETE')
+														<button type="button" class="dropdown-item text-danger btn-delete"><i
+																class="fa-solid fa-trash me-2"></i>{{ __('common.delete') }}</button>
+													</form>
+												</li>
+											</ul>
+										</div>
+									</td>
+								</tr>
+							@empty
+								<tr>
+									<td colspan="8" class="text-center py-5">
+										<div style="font-size:4rem; opacity:0.2;"><i class="fa-solid fa-box"></i></div>
+										<p class="text-muted mb-0">{{ __('admin.no_products_found') }}</p>
+										<a href="{{ route('admin.products.create') }}" class="btn btn-primary mt-3"><i
+												class="fa-solid fa-plus me-1"></i> {{ __('admin.add_first_product') }}</a>
+									</td>
+								</tr>
+							@endforelse
+						</tbody>
+					</table>
+				</div>
+			</div>
+
+			@if(method_exists($products, 'links'))
+				<div class="card-footer border-0 d-flex justify-content-end">
+					{{ $products->links('vendor.pagination.custom-brown') }}
+				</div>
+			@endif
+		</div>
+	</div>
+
+	{{-- Import Excel Modal Component --}}
+	<x-excel-import-modal title="Produk" importRoute="{{ route('admin.products.import') }}"
+		templateRoute="{{ route('admin.products.template') }}" />
+
+	<script>
+		// Auto-submit search form on typing (with debounce)
+		document.addEventListener('DOMContentLoaded', function () {
+			const searchInput = document.querySelector('input[name="search"]');
+			if (searchInput) {
+				let timeout = null;
+				searchInput.addEventListener('input', function () {
+					clearTimeout(timeout);
+					timeout = setTimeout(() => {
+						this.form.submit();
+					}, 500);
+				});
+
+				// Place cursor at the end of the text if focused
+				if (searchInput.value) {
+					searchInput.focus();
+					const val = searchInput.value;
+					searchInput.value = '';
+					searchInput.value = val;
+				}
+			}
+
+			// Scanner Integration
+			const btnScanner = document.getElementById('btnScanner');
+			if (btnScanner && typeof startArtikaScanner === 'function') {
+				btnScanner.addEventListener('click', function () {
+					startArtikaScanner(function (barcode) {
+						const input = document.getElementById('searchInput');
+						if (input) {
+							input.value = barcode;
+							// Submit the form automatically
+							input.form && input.form.submit();
+						}
+					});
+				});
+			}
+		});
+
+		// Handle delete confirmation with SweetAlert2
+		document.addEventListener('DOMContentLoaded', function () {
+			const deleteButtons = document.querySelectorAll('.btn-delete');
+			deleteButtons.forEach(button => {
+				button.addEventListener('click', function () {
+					const form = this.closest('form');
+					confirmAction({
+						text: "{{ __('admin.delete_product_confirm') }}",
+						confirmButtonText: "{{ __('common.delete') }}"
+					}).then((result) => {
+						if (result.isConfirmed) {
+							form.submit();
+						}
+					});
+				});
+			});
+		});
+	</script>
+
+	<!-- Scanner Modal -->
+	@include('components.scanner-modal')
+@endsection

@@ -1,0 +1,233 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\AuthController;
+
+Route::get('/', function () {
+    return redirect()->route('login');
+});
+
+Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+Route::get('/login/admin', [AuthController::class, 'showAdminLoginForm'])->name('login.admin');
+Route::get('/login/warehouse', [AuthController::class, 'showWarehouseLoginForm'])->name('login.warehouse');
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::get('/logout', [AuthController::class, 'logout']);
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/dashboard', function () {
+        $role = strtolower(Auth::user()->role->name ?? 'user');
+        if ($role === 'superadmin' || $role === 'admin')
+            return redirect()->route('admin.dashboard');
+        if ($role === 'manager')
+            return redirect()->route('manager.dashboard');
+        if ($role === 'cashier')
+            return redirect()->route('pos.index');
+        if ($role === 'warehouse')
+            return redirect()->route('warehouse.dashboard');
+        return view('dashboard');
+    })->name('dashboard');
+
+    // Profile Routes (Universal for all auth'd users)
+    Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'index'])->name('profile');
+    Route::put('/profile/password', [\App\Http\Controllers\ProfileController::class, 'updatePassword'])->name('profile.password');
+
+    // Admin & Superadmin Routes
+    Route::middleware(['role:superadmin,admin'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\AdminController::class, 'index'])->name('dashboard');
+
+        // Product Management
+        Route::get('/products', [\App\Http\Controllers\AdminController::class, 'products'])->name('products');
+        Route::get('/products/create', [\App\Http\Controllers\AdminController::class, 'createProduct'])->name('products.create');
+        Route::post('/products', [\App\Http\Controllers\AdminController::class, 'storeProduct'])->name('products.store');
+        Route::get('/products/{id}/edit', [\App\Http\Controllers\AdminController::class, 'editProduct'])->name('products.edit');
+        Route::put('/products/{id}', [\App\Http\Controllers\AdminController::class, 'updateProduct'])->name('products.update');
+        Route::delete('/products/{id}', [\App\Http\Controllers\AdminController::class, 'deleteProduct'])->name('products.delete');
+        Route::get('/products/template', [\App\Http\Controllers\AdminController::class, 'downloadProductTemplate'])->name('products.template');
+        Route::post('/products/import', [\App\Http\Controllers\AdminController::class, 'importProducts'])->name('products.import');
+
+        // Category Management
+        Route::get('/categories', [\App\Http\Controllers\CategoryController::class, 'index'])->name('categories');
+        Route::post('/categories', [\App\Http\Controllers\CategoryController::class, 'store'])->name('categories.store');
+        Route::put('/categories/{id}', [\App\Http\Controllers\CategoryController::class, 'update'])->name('categories.update');
+        Route::delete('/categories/{id}', [\App\Http\Controllers\CategoryController::class, 'destroy'])->name('categories.delete');
+
+        // Unit Management
+        Route::resource('units', \App\Http\Controllers\UnitController::class)->except(['create', 'edit', 'show']);
+
+        // User Management
+        Route::get('/users', [\App\Http\Controllers\UserController::class, 'index'])->name('users');
+        Route::post('/users', [\App\Http\Controllers\UserController::class, 'store'])->name('users.store');
+        Route::get('/users/template', [\App\Http\Controllers\UserController::class, 'downloadTemplate'])->name('users.template');
+        Route::post('/users/import', [\App\Http\Controllers\UserController::class, 'import'])->name('users.import');
+        Route::put('/users/{id}', [\App\Http\Controllers\UserController::class, 'update'])->name('users.update');
+        Route::delete('/users/{id}', [\App\Http\Controllers\UserController::class, 'destroy'])->name('users.delete');
+
+        // Supplier Management
+        Route::get('/suppliers', [\App\Http\Controllers\SupplierController::class, 'index'])->name('suppliers');
+        Route::post('/suppliers', [\App\Http\Controllers\SupplierController::class, 'store'])->name('suppliers.store');
+
+        // Supplier Pre-Orders
+        Route::prefix('suppliers')->name('suppliers.')->group(function () {
+            Route::get('/pre-orders', [\App\Http\Controllers\SupplierPreOrderController::class, 'index'])->name('pre_orders.index');
+            Route::get('/pre-orders/create', [\App\Http\Controllers\SupplierPreOrderController::class, 'create'])->name('pre_orders.create');
+            Route::post('/pre-orders', [\App\Http\Controllers\SupplierPreOrderController::class, 'store'])->name('pre_orders.store');
+            Route::get('/pre-orders/{preOrder}', [\App\Http\Controllers\SupplierPreOrderController::class, 'show'])->name('pre_orders.show');
+            Route::post('/pre-orders/{preOrder}/status', [\App\Http\Controllers\SupplierPreOrderController::class, 'updateStatus'])->name('pre_orders.update_status');
+            Route::get('/pre-orders/{preOrder}/print-faktur', [\App\Http\Controllers\SupplierPreOrderController::class, 'printFaktur'])->name('pre_orders.print_faktur');
+        });
+
+        Route::get('/suppliers/{supplier}', [\App\Http\Controllers\SupplierController::class, 'show'])->name('suppliers.show');
+        Route::put('/suppliers/{id}', [\App\Http\Controllers\SupplierController::class, 'update'])->name('suppliers.update');
+        Route::delete('/suppliers/{id}', [\App\Http\Controllers\SupplierController::class, 'destroy'])->name('suppliers.delete');
+        Route::get('/suppliers/{supplier}/pdf', [\App\Http\Controllers\SupplierController::class, 'exportPdf'])->name('suppliers.pdf');
+        Route::get('/suppliers/{supplier}/csv', [\App\Http\Controllers\SupplierController::class, 'exportCsv'])->name('suppliers.csv');
+
+        // Supplier Purchases
+        Route::post('/supplier-purchases', [\App\Http\Controllers\SupplierPurchaseController::class, 'store'])->name('supplier-purchases.store');
+        Route::get('/supplier-purchases/{supplier}/template', [\App\Http\Controllers\SupplierPurchaseController::class, 'downloadTemplate'])->name('supplier-purchases.template');
+        Route::post('/supplier-purchases/{supplier}/import', [\App\Http\Controllers\SupplierPurchaseController::class, 'import'])->name('supplier-purchases.import');
+
+        // Expense Management
+        Route::get('/expenses', [\App\Http\Controllers\ExpenseController::class, 'index'])->name('expenses.index');
+        Route::post('/expenses', [\App\Http\Controllers\ExpenseController::class, 'store'])->name('expenses.store');
+        Route::put('/expenses/{expense}', [\App\Http\Controllers\ExpenseController::class, 'update'])->name('expenses.update');
+        Route::delete('/expenses/{expense}', [\App\Http\Controllers\ExpenseController::class, 'destroy'])->name('expenses.delete');
+
+        // Expense Category Management
+        Route::get('/expense-categories', [\App\Http\Controllers\ExpenseCategoryController::class, 'index'])->name('expense-categories.index');
+        Route::post('/expense-categories', [\App\Http\Controllers\ExpenseCategoryController::class, 'store'])->name('expense-categories.store');
+        Route::put('/expense-categories/{expenseCategory}', [\App\Http\Controllers\ExpenseCategoryController::class, 'update'])->name('expense-categories.update');
+        Route::delete('/expense-categories/{expenseCategory}', [\App\Http\Controllers\ExpenseCategoryController::class, 'destroy'])->name('expense-categories.delete');
+
+        // Reports
+        // Reports Hub
+        Route::get('/reports', [\App\Http\Controllers\Admin\ReportsHubController::class, 'index'])->name('reports');
+        Route::get('/reports/print-all', [\App\Http\Controllers\Admin\ReportsHubController::class, 'printAll'])->name('reports.print-all');
+
+        // Warehouse Reports
+        Route::get('/reports/warehouse', [\App\Http\Controllers\Admin\WarehouseReportController::class, 'index'])->name('reports.warehouse');
+        Route::get('/reports/warehouse/export', [\App\Http\Controllers\Admin\WarehouseReportController::class, 'export'])->name('reports.warehouse.export');
+
+        // Cashier Reports
+        Route::get('/reports/cashier', [\App\Http\Controllers\Admin\CashierReportController::class, 'index'])->name('reports.cashier');
+        Route::get('/reports/cashier/export', [\App\Http\Controllers\Admin\CashierReportController::class, 'export'])->name('reports.cashier.export');
+        Route::post('/reports/cashier/rollback/{id}', [\App\Http\Controllers\Admin\CashierReportController::class, 'rollback'])->name('reports.cashier.rollback');
+        Route::get('/reports/cashier/items/{id}', [\App\Http\Controllers\Admin\CashierReportController::class, 'getTransactionItems'])->name('reports.cashier.items');
+        Route::put('/reports/cashier/update/{id}', [\App\Http\Controllers\Admin\CashierReportController::class, 'update'])->name('reports.cashier.update');
+        Route::delete('/reports/cashier/delete/{id}', [\App\Http\Controllers\Admin\CashierReportController::class, 'destroy'])->name('reports.cashier.delete');
+        Route::get('/reports/cashier/receipt/{id}', [\App\Http\Controllers\Admin\CashierReportController::class, 'printReceipt'])->name('reports.cashier.receipt');
+
+        // Finance Reports
+        Route::get('/reports/finance', [\App\Http\Controllers\Admin\FinanceReportController::class, 'index'])->name('reports.finance');
+        Route::get('/reports/finance/export', [\App\Http\Controllers\Admin\FinanceReportController::class, 'export'])->name('reports.finance.export');
+
+        // Audit Logs
+        Route::get('/audit', [\App\Http\Controllers\AuditController::class, 'index'])->name('audit.index');
+        Route::get('/audit/export', [\App\Http\Controllers\AuditController::class, 'export'])->name('audit.export');
+        Route::post('/audit/clear', [\App\Http\Controllers\AuditController::class, 'clear'])->name('audit.clear');
+
+        // Return Management
+        Route::get('/returns', [\App\Http\Controllers\Admin\ReturnController::class, 'index'])->name('returns.index');
+        Route::post('/returns', [\App\Http\Controllers\Admin\ReturnController::class, 'store'])->name('returns.store');
+        Route::get('/returns/{id}', [\App\Http\Controllers\Admin\ReturnController::class, 'show'])->name('returns.show');
+
+        // Promo Management
+        Route::middleware(['feature:admin_enable_promos'])->group(function () {
+            Route::get('/promos', [\App\Http\Controllers\PromoController::class, 'index'])->name('promos.index');
+            Route::post('/promos', [\App\Http\Controllers\PromoController::class, 'store'])->name('promos.store');
+            Route::put('/promos/{id}', [\App\Http\Controllers\PromoController::class, 'update'])->name('promos.update');
+            Route::delete('/promos/{id}', [\App\Http\Controllers\PromoController::class, 'destroy'])->name('promos.delete');
+            Route::post('/promos/{id}/toggle', [\App\Http\Controllers\PromoController::class, 'toggleStatus'])->name('promos.toggle');
+        });
+
+        // Settings Management
+        Route::get('/settings', [\App\Http\Controllers\AdminSettingController::class, 'index'])->name('settings');
+        Route::post('/settings', [\App\Http\Controllers\AdminSettingController::class, 'update'])->name('settings.update');
+    });
+
+    // Superadmin / Developer Routes
+    Route::middleware(['role:superadmin'])->prefix('superadmin')->name('superadmin.')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\SuperadminController::class, 'index'])->name('dashboard');
+        Route::post('/clear-cache', [\App\Http\Controllers\SuperadminController::class, 'clearCache'])->name('clear-cache');
+        Route::post('/optimize', [\App\Http\Controllers\SuperadminController::class, 'optimize'])->name('optimize');
+        Route::post('/toggle-maintenance', [\App\Http\Controllers\SuperadminController::class, 'toggleMaintenance'])->name('toggle-maintenance');
+        Route::get('/logs', [\App\Http\Controllers\SuperadminController::class, 'logs'])->name('logs');
+        Route::get('/settings', [\App\Http\Controllers\SuperadminController::class, 'settings'])->name('settings');
+        Route::post('/settings', [\App\Http\Controllers\SuperadminController::class, 'updateSettings'])->name('settings.update');
+        Route::resource('payment-methods', \App\Http\Controllers\Admin\PaymentMethodController::class);
+        Route::post('payment-methods/reorder', [\App\Http\Controllers\Admin\PaymentMethodController::class, 'reorder'])->name('payment-methods.reorder');
+
+        // FAQ Management (CRUD)
+        Route::get('/faq', [\App\Http\Controllers\FaqController::class, 'manage'])->name('faq');
+        Route::post('/faq', [\App\Http\Controllers\FaqController::class, 'store'])->name('faq.store');
+        Route::put('/faq/{id}', [\App\Http\Controllers\FaqController::class, 'update'])->name('faq.update');
+        Route::delete('/faq/{id}', [\App\Http\Controllers\FaqController::class, 'destroy'])->name('faq.destroy');
+
+        // Identity Types Management
+        Route::resource('identity-types', \App\Http\Controllers\IdentityTypeController::class)->except(['create', 'edit', 'show']);
+    });
+
+    // FAQ / Help Center (All authenticated users)
+    Route::get('/faq', [\App\Http\Controllers\FaqController::class, 'index'])->name('faq.index');
+
+    // Cashier Routes (POS)
+    Route::middleware(['role:cashier'])->prefix('pos')->name('pos.')->group(function () {
+        Route::get('/logs', [\App\Http\Controllers\PosController::class, 'logs'])
+            ->middleware(['feature:cashier_enable_audit_logs'])
+            ->name('logs');
+        Route::get('/history', [\App\Http\Controllers\PosController::class, 'history'])->name('history');
+        Route::get('/search', [\App\Http\Controllers\PosController::class, 'search'])->name('search');
+        Route::get('/', [\App\Http\Controllers\PosController::class, 'index'])->name('index');
+        Route::get('/scanner', [\App\Http\Controllers\PosController::class, 'scanner'])->name('scanner');
+        Route::post('/checkout', [\App\Http\Controllers\PosController::class, 'store'])->name('checkout');
+        Route::post('/hold', [\App\Http\Controllers\PosController::class, 'holdTransaction'])->name('hold');
+        Route::get('/held', [\App\Http\Controllers\PosController::class, 'getHeldTransactions'])->name('held.index');
+        Route::get('/held/{id}/resume', [\App\Http\Controllers\PosController::class, 'resumeHeldTransaction'])->name('held.resume');
+        Route::delete('/held/{id}', [\App\Http\Controllers\PosController::class, 'deleteHeldTransaction'])->name('held.delete');
+        Route::get('/receipt/{id}', [\App\Http\Controllers\PosController::class, 'printReceipt'])->name('receipt');
+    });
+
+    // Manager Routes (Kepala Toko)
+    Route::middleware(['role:manager'])->prefix('manager')->name('manager.')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\ManagerController::class, 'index'])->name('dashboard');
+
+        // Reports (read-only — reuses admin report controllers)
+        Route::get('/reports', [\App\Http\Controllers\Admin\ReportsHubController::class, 'index'])->name('reports');
+        Route::get('/reports/print-all', [\App\Http\Controllers\Admin\ReportsHubController::class, 'printAll'])->name('reports.print-all');
+        Route::get('/reports/warehouse', [\App\Http\Controllers\Admin\WarehouseReportController::class, 'index'])->name('reports.warehouse');
+        Route::get('/reports/warehouse/export', [\App\Http\Controllers\Admin\WarehouseReportController::class, 'export'])->name('reports.warehouse.export');
+        Route::get('/reports/cashier', [\App\Http\Controllers\Admin\CashierReportController::class, 'index'])->name('reports.cashier');
+        Route::get('/reports/cashier/export', [\App\Http\Controllers\Admin\CashierReportController::class, 'export'])->name('reports.cashier.export');
+        Route::get('/reports/finance', [\App\Http\Controllers\Admin\FinanceReportController::class, 'index'])->name('reports.finance');
+        Route::get('/reports/finance/export', [\App\Http\Controllers\Admin\FinanceReportController::class, 'export'])->name('reports.finance.export');
+
+        // Audit Logs (read-only)
+        Route::get('/audit', [\App\Http\Controllers\AuditController::class, 'index'])->name('audit.index');
+        Route::get('/audit/export', [\App\Http\Controllers\AuditController::class, 'export'])->name('audit.export');
+
+        // Transaction Correction (edit, rollback, view items, print receipt)
+        Route::get('/reports/cashier/items/{id}', [\App\Http\Controllers\Admin\CashierReportController::class, 'getTransactionItems'])->name('reports.cashier.items');
+        Route::put('/reports/cashier/update/{id}', [\App\Http\Controllers\Admin\CashierReportController::class, 'update'])->name('reports.cashier.update');
+        Route::post('/reports/cashier/rollback/{id}', [\App\Http\Controllers\Admin\CashierReportController::class, 'rollback'])->name('reports.cashier.rollback');
+        Route::get('/reports/cashier/receipt/{id}', [\App\Http\Controllers\Admin\CashierReportController::class, 'printReceipt'])->name('reports.cashier.receipt');
+        Route::post('/returns', [\App\Http\Controllers\Admin\ReturnController::class, 'store'])->name('returns.store');
+    });
+
+    // Warehouse Routes
+    Route::middleware(['role:admin,manager,warehouse'])->prefix('warehouse')->name('warehouse.')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\WarehouseController::class, 'index'])->name('dashboard');
+        Route::get('/stock', [\App\Http\Controllers\WarehouseController::class, 'stockManagement'])->name('stock');
+        Route::get('/low-stock', [\App\Http\Controllers\WarehouseController::class, 'lowStock'])->name('low-stock');
+        Route::get('/stock-movements', [\App\Http\Controllers\WarehouseController::class, 'stockMovements'])->name('stock-movements');
+        Route::post('/stock/adjust', [\App\Http\Controllers\WarehouseController::class, 'adjustStock'])->name('stock.adjust');
+        Route::delete('/stock/{id}', [\App\Http\Controllers\WarehouseController::class, 'destroyStock'])->name('stock.destroy');
+    });
+});
+
+// Language switching route (accessible to all)
+Route::get('/language/{lang}', [\App\Http\Controllers\LanguageController::class, 'change'])
+    ->name('language.change')
+    ->where('lang', 'id|en');
+
