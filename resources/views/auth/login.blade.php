@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="ARTIKA POS">
     <title>{{ $title ?? 'Login' }} - ARTIKA POS</title>
-    <link rel="icon" type="image/png" href="{{ asset('img/logo2.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset(App\Models\Setting::get('site_logo_login', 'img/logo.png')) }}">
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/img/icons/icon-192x192.png">
     <!-- Using inline SVG icons for reliability and theme control (removed external CDN) -->
@@ -28,9 +28,13 @@
     @vite(['resources/css/app.scss', 'resources/js/app.js'])
     {!! \App\Helpers\ThemeHelper::getCssVariables(\App\Models\Setting::get('site_color_theme', 'brown')) !!}
     <style>
+        @php $loginBg = App\Models\Setting::get('login_background', ''); @endphp
+
         body {
-            background-color: var(--gray-50);
-            min-height: 100vh;
+            @if($loginBg)
+                background: transparent;
+            @else background-color: var(--gray-50);
+            @endif min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -43,34 +47,46 @@
         }
 
         /* Dark mode overrides for background */
-        [data-bs-theme="dark"] body {
-            background-color: #030712;
-        }
+        @if(!$loginBg)
+            [data-bs-theme="dark"] body {
+                background-color: #030712;
+            }
 
-        /* Animated background pattern */
-        /* Subtle grayscale pattern for ultra-clean look */
+        @endif
+
+        /* Background layer */
         body::before {
             content: '';
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background-image:
-                radial-gradient(circle at 20% 50%, var(--gray-200) 0%, transparent 50%),
+            z-index: -1;
+            @if($loginBg)
+                background-image: url('{{ asset($loginBg) }}');
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+                filter: blur(6px);
+                transform: scale(1.05);
+                opacity: 1;
+            @else background-image: radial-gradient(circle at 20% 50%, var(--gray-200) 0%, transparent 50%),
                 radial-gradient(circle at 80% 80%, var(--gray-300) 0%, transparent 50%);
-            opacity: 0.1;
-            animation: float 15s ease-in-out infinite;
+                opacity: 0.1;
+                animation: float 15s ease-in-out infinite;
+            @endif
         }
 
-        [data-bs-theme="dark"] body::before {
-            background-image:
-                radial-gradient(circle at 20% 50%, #1f2937 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, #111827 0%, transparent 50%);
-            opacity: 0.4;
-        }
+        @if(!$loginBg)
+            [data-bs-theme="dark"] body::before {
+                background-image:
+                    radial-gradient(circle at 20% 50%, #1f2937 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, #111827 0%, transparent 50%);
+                opacity: 0.4;
+            }
 
-        @keyframes float {
+        @endif @keyframes float {
 
             0%,
             100% {
@@ -609,7 +625,8 @@
         <div class="card login-card">
             <div class="card-header">
                 <div class="brand-logo">
-                    <img src="{{ asset('img/logo2.png') }}" alt="ARTIKA Logo">
+                    <img src="{{ asset(App\Models\Setting::get('site_logo_login', 'img/logo.png')) }}"
+                        alt="ARTIKA Logo">
                 </div>
                 <p class="brand-subtitle mb-0">Smart Point of Sale System</p>
             </div>

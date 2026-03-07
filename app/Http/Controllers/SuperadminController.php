@@ -185,7 +185,9 @@ class SuperadminController extends Controller
             'General' => [
                 'system_name' => ['label' => 'System Name', 'type' => 'text', 'default' => 'ARTIKA POS'],
                 'address' => ['label' => 'Store Address', 'type' => 'text', 'default' => ''],
-                'footer_text' => ['label' => 'Footer Text', 'type' => 'text', 'default' => '© ' . date('Y') . ' RPL_Sentinel. All rights reserved.'],
+                'site_logo_login' => ['label' => 'Logo Halaman Login', 'type' => 'file', 'accept' => '.png,.jpg,.jpeg,.webp', 'default' => 'img/logo.png'],
+                'site_logo' => ['label' => 'Logo Aplikasi (Navbar & Lainnya)', 'type' => 'file', 'accept' => '.png,.jpg,.jpeg,.webp', 'default' => 'img/logo2.png'],
+                'login_background' => ['label' => 'Background Halaman Login', 'type' => 'file', 'accept' => '.png,.jpg,.jpeg,.webp', 'default' => ''],
                 'site_color_theme' => ['label' => 'Tema Warna Website', 'type' => 'palette', 'default' => 'brown'],
                 'custom_primary_color' => ['label' => 'Warna Kustom (Primary)', 'type' => 'color', 'default' => '#85695a'],
                 'enable_faq' => ['label' => 'Aktifkan Fitur Pusat Bantuan (FAQ)', 'type' => 'boolean', 'default' => true],
@@ -259,9 +261,47 @@ class SuperadminController extends Controller
      */
     public function updateSettings(Request $request)
     {
-        $settings = $request->except('_token');
+        // Handle file uploads first
+        $fileKeys = ['site_logo_login', 'site_logo', 'login_background'];
+        foreach ($fileKeys as $fileKey) {
+            // Handle file removal
+            if ($request->has('remove_' . $fileKey)) {
+                $oldPath = \App\Models\Setting::get($fileKey);
+                if ($oldPath && $oldPath !== 'img/logo2.png' && file_exists(public_path($oldPath))) {
+                    @unlink(public_path($oldPath));
+                }
+                \App\Models\Setting::set($fileKey, '');
+                continue;
+            }
+
+            // Handle file upload
+            if ($request->hasFile($fileKey)) {
+                $file = $request->file($fileKey);
+
+                // Validate
+                $request->validate([
+                    $fileKey => 'image|mimes:png,jpg,jpeg,webp|max:2048',
+                ]);
+
+                // Delete old file if exists
+                $oldPath = \App\Models\Setting::get($fileKey);
+                if ($oldPath && $oldPath !== 'img/logo2.png' && file_exists(public_path($oldPath))) {
+                    @unlink(public_path($oldPath));
+                }
+
+                // Store new file
+                $filename = $fileKey . '_' . time() . '.' . $file->getClientOriginalExtension();
+                $file->move(public_path('img/uploads'), $filename);
+                \App\Models\Setting::set($fileKey, 'img/uploads/' . $filename);
+            }
+        }
+
+        $settings = $request->except(array_merge(['_token'], $fileKeys, array_map(fn($k) => 'remove_' . $k, $fileKeys)));
 
         foreach ($settings as $key => $value) {
+            // Skip file inputs that didn't have a file
+            if (in_array($key, $fileKeys))
+                continue;
             // Convert 'on' from checkboxes to boolean strings
             if ($value === 'on')
                 $value = 'true';

@@ -17,7 +17,7 @@
             </div>
         @endif
 
-        <form action="{{ route('superadmin.settings.update') }}" method="POST">
+        <form action="{{ route('superadmin.settings.update') }}" method="POST" enctype="multipart/form-data">
             @csrf
             
             <div class="row g-4">
@@ -111,6 +111,27 @@
                                                                 </div>
                                                             @endforeach
                                                         </div>
+                                                    @elseif($config['type'] === 'file')
+                                                        <label class="form-label fw-bold text-muted small text-uppercase mb-2">{{ $config['label'] }}</label>
+                                                        @php $currentFile = $settings->get($key, $config['default']); @endphp
+                                                        @if($currentFile)
+                                                            <div class="mb-3 p-3 bg-light d-flex align-items-center gap-3" style="border-radius: 12px; border: 1px solid var(--brown-100);">
+                                                                <img src="{{ asset($currentFile) }}" alt="{{ $config['label'] }}" 
+                                                                     style="max-height: 60px; max-width: 200px; object-fit: contain; border-radius: 8px; background: #fff; padding: 4px;">
+                                                                <div class="flex-grow-1">
+                                                                    <small class="text-muted d-block">{{ basename($currentFile) }}</small>
+                                                                </div>
+                                                                <label class="btn btn-sm btn-outline-danger" style="border-radius: 8px; font-weight: 600; cursor: pointer;">
+                                                                    <input type="checkbox" name="remove_{{ $key }}" value="1" class="d-none" 
+                                                                           onchange="this.closest('.bg-light').style.opacity=this.checked?'0.4':'1'">
+                                                                    <i class="fa-solid fa-trash-can me-1"></i>Hapus
+                                                                </label>
+                                                            </div>
+                                                        @endif
+                                                        <input type="file" class="form-control" name="{{ $key }}" id="{{ $key }}"
+                                                               accept="{{ $config['accept'] ?? '.png,.jpg,.jpeg,.webp' }}"
+                                                               style="border-radius: 12px; border: 2px solid var(--brown-100); padding: 12px 16px;">
+                                                        <small class="text-muted mt-1 d-block"><i class="fa-solid fa-circle-info me-1"></i>Format: PNG, JPG, JPEG, WebP. Maks 2MB.</small>
                                                     @else
                                                         <div @if($key === 'custom_primary_color') id="custom-color-container" style="display: {{ $settings->get('site_color_theme') === 'custom' ? 'block' : 'none' }};" @endif>
                                                             <label class="form-label fw-bold text-muted small text-uppercase mb-2">{{ $config['label'] }}</label>

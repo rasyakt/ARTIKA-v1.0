@@ -1,5 +1,5 @@
 @php 
-                                        /** @var \App\Models\User $user */
+                                            /** @var \App\Models\User $user */
     $user = Auth::user();
     $role = strtolower($user->role->name ?? '');
 @endphp
@@ -144,7 +144,8 @@
     <div class="pos-navbar">
         <div class="navbar-brand d-flex align-items-center">
             <a href="{{ route('pos.index') }}">
-                <img src="{{ asset('img/logo2.png') }}" alt="ARTIKA Logo" style="height: 38px; width: auto;">
+                <img src="{{ asset(App\Models\Setting::get('site_logo', 'img/logo2.png')) }}" alt="ARTIKA Logo"
+                    style="height: 38px; width: auto;">
             </a>
         </div>
         <div class="navbar-right">

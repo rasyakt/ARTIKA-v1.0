@@ -419,7 +419,7 @@
         <!-- Header -->
         <div class="header">
             <div class="logo-container">
-                <img src="{{ asset('img/logo2.png') }}" alt="Logo" class="logo">
+                <img src="{{ asset(App\Models\Setting::get('site_logo', 'img/logo2.png')) }}" alt="Logo" class="logo">
             </div>
             <div class="store-name">ARTIKA MINIMARKET</div>
             <div class="store-info">{{ App\Models\Setting::get('address', '') }}</div>

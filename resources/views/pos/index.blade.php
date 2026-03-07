@@ -23,7 +23,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="ARTIKA POS">
     <title>{{ __('pos.title') }}</title>
-    <link rel="icon" type="image/png" href="{{ asset('img/logo2.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset(App\Models\Setting::get('site_logo', 'img/logo2.png')) }}">
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/img/icons/icon-192x192.png">
     @vite(['resources/css/app.scss', 'resources/js/app.js'])
@@ -2050,7 +2050,8 @@
         <!-- NAVBAR -->
         <div class="pos-navbar">
             <div class="navbar-brand d-flex align-items-center">
-                <img src="{{ asset('img/logo2.png') }}" alt="ARTIKA Logo" style="height: 38px; width: auto;">
+                <img src="{{ asset(App\Models\Setting::get('site_logo', 'img/logo2.png')) }}" alt="ARTIKA Logo"
+                    style="height: 38px; width: auto;">
             </div>
             <div class="navbar-right">
                 <!-- Shortcut Help Button -->

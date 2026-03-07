@@ -22,7 +22,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="ARTIKA POS">
     <title>@yield('title', 'Dashboard') - {{ App\Models\Setting::get('system_name', 'ARTIKA POS') }}</title>
-    <link rel="icon" type="image/png" href="{{ asset('img/logo2.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset(App\Models\Setting::get('site_logo', 'img/logo2.png')) }}">
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/img/icons/icon-192x192.png">
     <!-- Fonts & Icons -->
@@ -533,7 +533,7 @@
             @endif
 
             <a class="navbar-brand d-flex align-items-center" href="{{ route('dashboard') }}">
-                <img src="{{ asset('img/logo2.png') }}"
+                <img src="{{ asset(App\Models\Setting::get('site_logo', 'img/logo2.png')) }}"
                     alt="{{ App\Models\Setting::get('system_name', 'ARTIKA Logo') }}"
                     style="height: 35px; width: auto;">
                 <span
