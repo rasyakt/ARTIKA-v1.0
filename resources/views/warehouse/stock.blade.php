@@ -154,7 +154,8 @@
                             @foreach($stocks as $stock)
                                 <tr>
                                     <td class="ps-4">
-                                        <div class="fw-bold" style="color: var(--color-primary-dark);">
+                                        <div class="fw-bold text-truncate-mobile" style="color: var(--color-primary-dark);"
+                                            title="{{ $stock->product->name }}">
                                             {{ $stock->product->name }}
                                         </div>
                                         <small class="text-muted">{{ $stock->product->barcode }}</small>

@@ -22,6 +22,34 @@
         .text-decoration-line-through {
             text-decoration: line-through;
         }
+
+        /* Mobile: make tab nav scrollable and compact */
+        @media (max-width: 768px) {
+            #reportTabs {
+                flex-wrap: nowrap !important;
+                overflow-x: auto;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+                justify-content: flex-start !important;
+                gap: 0.25rem !important;
+                padding: 0.25rem !important;
+            }
+            #reportTabs::-webkit-scrollbar { display: none; }
+            #reportTabs .nav-link {
+                white-space: nowrap;
+                font-size: 0.78rem;
+                padding: 0.4rem 0.75rem !important;
+            }
+            #reportTabs .nav-item { flex-shrink: 0; }
+        }
+        @media (max-width: 575px) {
+            /* Header: stack back button and title */
+            .d-flex.align-items-center.mb-1 { flex-wrap: nowrap; }
+            /* Filters: all selects and inputs full-width */
+            .row.g-3.align-items-end > [class*="col-"] {
+                flex: 0 0 100%; max-width: 100%;
+            }
+        }
     </style>
 
     <div class="container-fluid py-4">

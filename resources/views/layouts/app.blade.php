@@ -178,132 +178,190 @@
             bottom: 0;
             width: 260px;
             border-right: 1px solid var(--gray-200);
-            padding: 1.25rem 0;
+            padding: 1rem 0;
             overflow-y: auto;
-            z-index: 1000;
-            transition: background-color 0.3s ease;
+            z-index: 1020;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            scrollbar-width: thin;
+            scrollbar-color: var(--color-primary) transparent;
         }
 
         .sidebar::-webkit-scrollbar {
-            width: 4px;
+            width: 5px;
         }
 
         .sidebar::-webkit-scrollbar-thumb {
             background-color: var(--color-primary);
-            border-radius: 4px;
+            border-radius: 10px;
         }
 
         .sidebar-link {
             display: flex;
             align-items: center;
-            padding: 0.75rem 1.5rem;
+            padding: 0.85rem 1.25rem;
             color: var(--gray-600);
             text-decoration: none;
             font-weight: 500;
-            transition: all 0.25s ease;
-            margin: 0.2rem 1rem;
-            border-radius: 10px;
+            font-size: 0.925rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin: 0.25rem 0.75rem;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar-link i:first-child {
+            margin-right: 1rem;
+            font-size: 1.1rem;
+            width: 1.5rem;
+            text-align: center;
+            color: var(--color-primary);
+            transition: transform 0.3s ease;
         }
 
         .sidebar-link:hover {
-            background: var(--gray-100);
-            color: var(--color-primary);
+            background: var(--brown-50);
+            color: var(--color-primary-dark);
+            transform: translateX(4px);
+        }
+
+        .sidebar-link:hover i:first-child {
+            transform: scale(1.15);
         }
 
         .sidebar-link.active {
-            background: var(--color-secondary-light);
-            color: var(--color-primary);
+            background: linear-gradient(90deg, var(--color-secondary-light) 0%, var(--brown-50) 100%);
+            color: var(--color-primary-dark);
             font-weight: 700;
+            box-shadow: 0 4px 12px rgba(133, 105, 90, 0.08);
         }
 
-        .sidebar-link i {
-            margin-right: 0.75rem;
-            font-size: 1.05rem;
-            width: 1.2rem;
-            text-align: center;
-            color: var(--color-primary);
-        }
-
-        .sidebar-link.text-danger:hover {
-            background: var(--color-danger-light) !important;
-            border-left-color: var(--color-danger) !important;
+        .sidebar-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 20%;
+            height: 60%;
+            width: 4px;
+            background: var(--color-primary);
+            border-radius: 0 4px 4px 0;
         }
 
         /* Sidebar Dropdown Styles */
         .sidebar-dropdown {
             display: flex;
             flex-direction: column;
+            margin-bottom: 0.25rem;
         }
 
         .sidebar-dropdown-toggle {
             cursor: pointer;
-            position: relative;
             user-select: none;
         }
 
         .dropdown-arrow {
             margin-left: auto;
-            font-size: 0.75rem;
-            transition: transform 0.3s ease;
-            opacity: 0.6;
+            font-size: 0.7rem;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0.5;
         }
 
-        .sidebar-dropdown.active .dropdown-arrow {
+        .sidebar-dropdown.active>.sidebar-link .dropdown-arrow {
             transform: rotate(90deg);
             opacity: 1;
         }
 
         .sidebar-submenu {
             display: none;
-            background: var(--gray-50);
             list-style: none;
-            padding: 0;
+            padding: 0.25rem 0 0.5rem 2.85rem;
             margin: 0;
+            position: relative;
+        }
+
+        /* Connecting line for submenu */
+        .sidebar-submenu::before {
+            content: '';
+            position: absolute;
+            left: 1.95rem;
+            top: 0;
+            bottom: 1rem;
+            width: 1.5px;
+            background: var(--brown-100);
+            border-radius: 1px;
+            opacity: 0.6;
         }
 
         .sidebar-dropdown.active .sidebar-submenu {
             display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .submenu-link {
             display: flex;
             align-items: center;
-            padding: 0.65rem 1.5rem 0.65rem 3rem;
-            color: var(--color-primary-dark);
+            padding: 0.6rem 1rem;
+            color: var(--gray-600);
             text-decoration: none;
             font-size: 0.875rem;
             font-weight: 500;
-            transition: all 0.2s;
-            border-left: 3px solid transparent;
+            transition: all 0.2s ease;
+            border-radius: 8px;
+            margin: 0.15rem 0.75rem 0.15rem 0;
+            position: relative;
+        }
+
+        .submenu-link::before {
+            content: '';
+            position: absolute;
+            left: -0.9rem;
+            top: 50%;
+            width: 0.6rem;
+            height: 1.5px;
+            background: var(--brown-100);
+            opacity: 0.6;
         }
 
         .submenu-link:hover {
             background: var(--brown-50);
             color: var(--color-primary);
+            padding-left: 1.25rem;
         }
 
         .submenu-link.active {
-            color: var(--color-primary);
+            color: var(--color-primary-dark);
             font-weight: 700;
-            background: var(--brown-50);
+            background: var(--color-secondary-light);
         }
 
         .submenu-link i {
             margin-right: 0.75rem;
-            font-size: 0.9rem;
-            width: 1.1rem;
+            font-size: 0.85rem;
+            width: 1rem;
             text-align: center;
             color: var(--color-primary);
             opacity: 0.8;
         }
 
         .sidebar-section-title {
-            padding: 1.25rem 1.5rem 0.5rem;
-            font-size: 0.7rem;
+            padding: 1.5rem 1.75rem 0.6rem;
+            font-size: 0.65rem;
             font-weight: 800;
             text-uppercase;
-            color: var(--color-primary-light);
-            letter-spacing: 0.05em;
+            color: var(--gray-400);
+            letter-spacing: 0.12em;
         }
 
         .main-content {
@@ -313,6 +371,7 @@
             margin-top: 64px;
             min-height: calc(100vh - 64px);
             width: calc(100% - 260px);
+            transition: all 0.3s ease;
         }
 
         .navbar-brand {
@@ -411,15 +470,12 @@
         /* Sidebar Overlay */
         .sidebar-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            inset: 0;
             background: rgba(0, 0, 0, 0.5);
             z-index: 1040;
             opacity: 0;
             visibility: hidden;
-            transition: all 0.3s;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
         }
 
         .sidebar-overlay.active {
@@ -449,50 +505,69 @@
             }
 
             .sidebar {
-                position: fixed;
-                left: -280px;
-                top: 0;
-                width: 280px;
-                height: 100vh;
-                z-index: 1050;
-                transition: left 0.3s ease-in-out;
-                box-shadow: 2px 0 12px rgba(0, 0, 0, 0.1);
-                overflow-y: auto;
-                padding-top: 1rem;
+                position: fixed !important;
+                left: -290px !important;
+                top: 0 !important;
+                bottom: 0 !important;
+                width: 290px !important;
+                height: auto !important; /* Spans top to bottom */
+                z-index: 9999 !important;
+                transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                box-shadow: 15px 0 30px rgba(0, 0, 0, 0.1);
+                overflow-y: auto !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                border: none !important;
+                border-radius: 0 !important;
+                background: var(--card-bg) !important;
+                display: flex !important;
+                flex-direction: column !important;
+                overscroll-behavior: contain;
             }
 
             .sidebar.active {
-                left: 0;
+                left: 0 !important;
             }
 
             .sidebar-header {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                padding: 1rem 1.5rem;
-                border-bottom: 2px solid var(--brown-100);
-                margin-bottom: 1rem;
+                padding: 1.5rem 1.75rem;
+                border-bottom: 1.5px solid var(--brown-50);
+                margin-bottom: 0.75rem;
+                background: var(--brown-50);
             }
 
             .sidebar-title {
-                font-weight: 700;
+                font-weight: 800;
                 color: var(--color-primary-dark);
-                font-size: 1.125rem;
+                font-size: 1.25rem;
+                letter-spacing: -0.02em;
             }
 
             .sidebar-close {
-                background: none;
+                background: var(--white);
                 border: none;
-                font-size: 1.5rem;
+                width: 36px;
+                height: 36px;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 color: var(--color-primary-dark);
                 cursor: pointer;
-                padding: 0;
-                line-height: 1;
                 transition: all 0.3s;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            }
+
+            .sidebar-close i {
+                font-size: 1rem;
             }
 
             .sidebar-close:hover {
-                color: var(--color-primary);
+                background: var(--color-danger);
+                color: #fff;
                 transform: rotate(90deg);
             }
 
@@ -518,6 +593,335 @@
             display: flex;
             align-items: center;
         }
+
+
+        /* ===================================================
+           GLOBAL MOBILE RESPONSIVE - ARTIKA ADMIN
+           Covers: admin, warehouse, manager, superadmin
+        =================================================== */
+
+        /* ─── Small Tablets (≤ 768px) ─── */
+        @media (max-width: 768px) {
+
+            /* 1. LAYOUT & SPACING */
+            .container-fluid.py-4 {
+                padding: 1rem 0.875rem !important;
+            }
+
+            /* 2. NAVBAR */
+            .main-navbar .container-fluid {
+                padding: 0 0.75rem;
+            }
+
+            .main-navbar .brand-text {
+                font-size: 0.85rem;
+            }
+
+            /* 3. MAIN CONTENT (already handled by sidebar offset JS) */
+            .main-content {
+                padding-top: 64px;
+            }
+
+            /* 4. PAGE HEADERS — stack title / actions vertically */
+            .d-flex.justify-content-between.align-items-center,
+            .d-flex.justify-content-between.align-items-md-center {
+                flex-wrap: wrap;
+                gap: 0.75rem;
+            }
+
+            .d-flex.justify-content-between.align-items-center>div:last-child,
+            .d-flex.justify-content-between.align-items-md-center>div:last-child {
+                width: 100%;
+            }
+
+            /* 5. TYPOGRAPHY */
+            h2.fw-bold {
+                font-size: 1.2rem !important;
+            }
+
+            h5.fw-bold {
+                font-size: 1rem !important;
+            }
+
+            h4.fw-bold {
+                font-size: 1.1rem !important;
+            }
+
+            /* 6. ACTION BUTTON GROUPS — wrap and fill */
+            .d-flex.align-items-center.gap-2>.btn,
+            .d-flex.align-items-center.gap-2>a.btn {
+                flex: 1 1 auto;
+                font-size: 0.83rem;
+                padding: 0.45rem 0.85rem;
+                white-space: nowrap;
+            }
+
+            /* 7. SEARCH + FILTER FORMS — stack vertically */
+            .search-filter,
+            form.d-flex.align-items-center.gap-3 {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 0.6rem !important;
+                width: 100% !important;
+            }
+
+            .search-filter>*,
+            form.d-flex.align-items-center.gap-3>* {
+                width: 100% !important;
+                min-width: 0 !important;
+                flex: unset !important;
+            }
+
+            .search-container-capsule {
+                width: 100% !important;
+            }
+
+            .category-select,
+            .search-input {
+                min-width: 0 !important;
+                width: 100% !important;
+            }
+
+            /* 8. CARD PADDING */
+            .card-body {
+                padding: 1rem !important;
+            }
+
+            .card-body.p-4 {
+                padding: 1rem !important;
+            }
+
+            .card-header,
+            .card-header.p-4,
+            .card-header.py-4.px-4 {
+                padding: 0.875rem 1rem !important;
+            }
+
+            .card-footer {
+                padding: 0.75rem 1rem !important;
+            }
+
+            /* 9. STATS CARDS — 2 columns */
+            .row.g-4>.col-xl-3,
+            .row.g-4>.col-md-6 {
+                flex: 0 0 50%;
+                max-width: 50%;
+            }
+
+            .row.g-4>.col-xl-3 .card-body {
+                padding: 0.875rem !important;
+            }
+
+            .row.g-4>.col-xl-3 h4 {
+                font-size: 1rem;
+            }
+
+            .row.g-4>.col-xl-3 p {
+                font-size: 0.68rem !important;
+            }
+
+            .icon-box-premium {
+                width: 38px !important;
+                height: 38px !important;
+                font-size: 0.9rem !important;
+            }
+
+            /* 10. TABLES */
+            .table th,
+            .table td {
+                font-size: 0.8rem;
+                padding: 0.5rem 0.65rem;
+                white-space: nowrap;
+                vertical-align: middle;
+            }
+
+            .table-responsive {
+                -webkit-overflow-scrolling: touch;
+                border: 0;
+            }
+
+            /* Text truncation utility for long names */
+            .text-truncate-mobile {
+                max-width: 140px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            /* 11. FORMS */
+            .form-control,
+            .form-select {
+                font-size: 0.9rem;
+            }
+
+            .form-control-lg,
+            .form-select-lg {
+                font-size: 0.95rem !important;
+            }
+
+            .input-group>.btn {
+                white-space: nowrap;
+            }
+
+            /* 12. CHARTS */
+            .chart-container {
+                height: 220px !important;
+            }
+
+            /* 13. MODALS */
+            .modal-dialog {
+                margin: 0.75rem;
+                max-width: calc(100% - 1.5rem);
+            }
+
+            .modal-dialog.modal-dialog-centered {
+                min-height: calc(100% - 1.5rem);
+            }
+
+            .modal-body.p-4,
+            .modal-body {
+                padding: 1rem !important;
+            }
+
+            .modal-header,
+            .modal-footer {
+                padding: 0.875rem 1rem !important;
+            }
+
+            /* 14. PAGINATION */
+            .pagination {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .pagination .page-link {
+                padding: 0.35rem 0.6rem;
+                font-size: 0.8rem !important;
+            }
+
+            /* 15. NAV PILLS (Settings tabs) — horizontal scrollable, no scrollbar */
+            .nav-pills {
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+                padding-bottom: 0.25rem;
+            }
+
+            .nav-pills::-webkit-scrollbar {
+                display: none;
+            }
+
+            /* 16. BADGES */
+            .badge {
+                font-size: 0.7rem;
+                padding: 0.3em 0.5em;
+            }
+
+            /* 17. ALERTS & INFO BOXES */
+            .alert {
+                font-size: 0.875rem;
+            }
+
+            .mb-4.p-3 {
+                padding: 0.75rem !important;
+            }
+
+            /* 18. FORM ROWS — col-md-6 should be full width */
+            .row>.col-md-6:not(.col-6):not(.col-sm-6) {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+        }
+
+        /* ─── Phones (≤ 575px) ─── */
+        @media (max-width: 575px) {
+            .container-fluid.py-4 {
+                padding: 0.875rem 0.625rem !important;
+            }
+
+            /* Header title + subtitle stacked, action button full width */
+            .d-flex.justify-content-between.align-items-center>*,
+            .d-flex.justify-content-between.align-items-md-center>* {
+                flex: 1 1 100%;
+            }
+
+            .d-flex.align-items-center.gap-2>.btn,
+            .d-flex.align-items-center.gap-2>a.btn {
+                flex: 1 1 100%;
+                justify-content: center;
+            }
+
+            /* Charts shorter on phones */
+            .chart-container {
+                height: 180px !important;
+            }
+
+            /* Stats cards — still 2 columns on phones */
+            .row.g-4>.col-xl-3 {
+                flex: 0 0 50%;
+                max-width: 50%;
+            }
+
+            .row.g-4>.col-xl-3 h4 {
+                font-size: 0.9rem;
+            }
+
+            .row.g-4>.col-xl-3 p {
+                font-size: 0.62rem !important;
+            }
+
+            /* Table cells even more compact but still scrollable */
+            .table th,
+            .table td {
+                font-size: 0.75rem;
+                padding: 0.4rem 0.5rem;
+            }
+
+            /* Report Hub cards — 2 per row */
+            .row.g-4>.col-xl-3.col-md-6 {
+                flex: 0 0 50%;
+                max-width: 50%;
+            }
+
+            .report-card .card-body {
+                padding: 0.875rem !important;
+            }
+
+            .report-icon {
+                width: 52px !important;
+                height: 52px !important;
+                font-size: 1.5rem !important;
+                margin-bottom: 12px !important;
+            }
+
+            /* Settings nav pills — horizontal, all visible */
+            #settings-tabs .nav-link {
+                font-size: 0.75rem !important;
+                padding: 7px 11px !important;
+            }
+        }
+
+        /* ─── Very small phones (≤ 390px) ─── */
+        @media (max-width: 390px) {
+            h2.fw-bold {
+                font-size: 1.05rem !important;
+            }
+
+            /* Stats cards — full width 1 column on tiny phones */
+            .row.g-4>.col-xl-3 {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+
+            /* Report cards — 1 column */
+            .row.g-4>.col-xl-3.col-md-6 {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+
+            .text-truncate-mobile {
+                max-width: 110px;
+            }
+        }
     </style>
 </head>
 
@@ -526,7 +930,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark main-navbar">
         <div class="container-fluid px-4">
             <!-- Hamburger Menu (Mobile) -->
-            @if($user?->role?->name === 'admin' || $user?->role?->name === 'warehouse')
+            @if(in_array($user?->role?->name, ['superadmin', 'admin', 'manager', 'warehouse']))
                 <button class="hamburger-btn me-3" id="hamburgerBtn" type="button">
                     ☰
                 </button>
@@ -644,7 +1048,9 @@
                     <!-- Mobile Sidebar Header -->
                     <div class="sidebar-header">
                         <span class="sidebar-title">{{ __('menu.menu') }}</span>
-                        <button class="sidebar-close" id="sidebarClose">×</button>
+                        <button class="sidebar-close" id="sidebarClose">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
                     </div>
 
                     @if(in_array($user?->role?->name, ['superadmin', 'admin']))

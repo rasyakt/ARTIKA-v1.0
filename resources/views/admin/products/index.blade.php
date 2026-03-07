@@ -253,7 +253,8 @@
 												@endif
 											</div>
 											<div>
-												<div class="fw-bold" style="color:var(--color-primary-dark);">
+												<div class="fw-bold text-truncate-mobile"
+													style="color:var(--color-primary-dark);" title="{{ $product->name }}">
 													{{ $product->name }}
 												</div>
 												<small class="text-muted">ID: {{ $product->id }}</small>

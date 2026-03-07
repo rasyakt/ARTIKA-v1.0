@@ -205,6 +205,28 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             background: var(--brown-50) !important;
         }
+
+        /* Mobile responsive: stack tabs horizontally */
+        @media (max-width: 991px) {
+            #settings-tabs {
+                flex-direction: row !important;
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                gap: 0.25rem;
+                padding-bottom: 0.5rem;
+            }
+
+            #settings-tabs .nav-link {
+                white-space: nowrap;
+                font-size: 0.8rem;
+                padding: 8px 14px !important;
+            }
+
+            .col-lg-3 .sticky-top {
+                position: relative !important;
+                top: 0 !important;
+            }
+        }
     </style>
 
     <script>

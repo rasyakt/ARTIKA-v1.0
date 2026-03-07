@@ -26,7 +26,17 @@
             background-color: var(--color-primary-light);
             color: var(--color-primary);
         }
-        
+
+        /* Dashboard KPI cards */
+        @media (max-width: 768px) {
+            .chart-container { height: 240px !important; }
+            .btn-group { flex-wrap: wrap; width: 100%; }
+            .btn-group .btn { flex: 1 1 auto; font-size: 0.78rem; padding: 0.35rem 0.5rem; }
+        }
+        @media (max-width: 575px) {
+            .chart-container { height: 200px !important; }
+            .text-end.dashboard-date { display: none; }
+        }
     </style>
 
     <div class="container-fluid py-4">
@@ -36,7 +46,7 @@
                 <h2 class="fw-bold mb-1" style="color: var(--color-primary-dark);">{{ __('admin.dashboard_title') }}</h2>
                 <p class="text-muted mb-0">{{ __('admin.dashboard_subtitle') }}</p>
             </div>
-            <div class="text-end">
+            <div class="text-end dashboard-date">
                 <small class="text-muted">{{ __('common.last_updated') }}: {{ now()->format('d M Y, H:i') }}</small>
             </div>
         </div>

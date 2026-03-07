@@ -139,7 +139,7 @@
                             @endif
 
                             <!-- Action Buttons -->
-                            <div class="d-flex gap-3 justify-content-end pt-3 border-top">
+                            <div class="d-flex flex-column flex-sm-row gap-2 justify-content-end pt-3 border-top mt-2">
                                 <a href="{{ route('admin.products') }}" class="btn btn-outline-secondary"
                                     style="border-radius: 12px; padding: 0.75rem 1.5rem; font-weight: 600;">
                                     {{ __('common.cancel') }}
