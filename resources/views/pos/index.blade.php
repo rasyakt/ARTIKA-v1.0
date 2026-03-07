@@ -2295,7 +2295,7 @@
                         <button class="btn-checkout bg-danger btn-cancel clearBtn" id="clearBtn"
                             title="Hapus Keranjang (Alt + C)">
                             <i class="fas fa-trash text-white opacity-90"></i>
-                            <span class="shortcut-hint d-none d-lg-inline-block">Alt+C</span>
+                            <span class="shortcut-hint d-none d-lg-inline-block text-white">Alt+C</span>
                         </button>
                         <button class="btn-checkout btn-primary" id="btnHold" onclick="holdTransaction()"
                             title="Tunda Transaksi (F9)">

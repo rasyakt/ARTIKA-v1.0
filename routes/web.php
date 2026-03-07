@@ -13,7 +13,7 @@ Route::get('/login/admin', [AuthController::class, 'showAdminLoginForm'])->name(
 Route::get('/login/warehouse', [AuthController::class, 'showWarehouseLoginForm'])->name('login.warehouse');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-Route::get('/logout', [AuthController::class, 'logout']);
+// Route::get('/logout', [AuthController::class, 'logout']); // REMOVED for security
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', function () {

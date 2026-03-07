@@ -220,7 +220,7 @@
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-white border-bottom-0 pt-4 px-4">
                 <ul class="nav nav-pills nav-fill gap-2 p-1 bg-light rounded-5 mb-0" id="reportTabs" role="tablist"
-                    style="border: 1px solid var(--color-primary);">
+                    >
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active rounded-pill fw-bold" id="transactions-tab" data-bs-toggle="tab"
                             data-bs-target="#transactions-pane" type="button" role="tab">

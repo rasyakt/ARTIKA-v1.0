@@ -199,12 +199,12 @@
                                         <span class="badge" style="background: var(--color-primary-light); color: white; padding: 6px 10px;">
                                             <i class="fa-solid fa-arrow-down me-1"></i> {{ $summary['movements_in'] }} IN
                                         </span>
-                                        <span class="badge ms-2"
-                                            style="background: var(--color-primary-light); color: white; padding: 6px 10px;">
+                                        <span class="badge ms-2 bg-warning"
+                                            style="color: white; padding: 6px 10px;">
                                             <i class="fa-solid fa-arrow-up me-1"></i> {{ $summary['movements_out'] }} OUT
                                         </span>
-                                        <span class="badge ms-2"
-                                            style="background: var(--color-primary-light); color: white; padding: 6px 10px;">
+                                        <span class="badge ms-2 bg-danger"
+                                            style="color: white; padding: 6px 10px;">
                                             <i class="fa-solid fa-gear me-1"></i> {{ $summary['movements_adjustment'] }} ADJ
                                         </span>
                                     </div>
@@ -383,7 +383,7 @@
                                             @if($movement->type == 'in')
                                                 <span class="badge bg-success">IN</span>
                                             @elseif($movement->type == 'out')
-                                                <span class="badge bg-warning text-dark">OUT</span>
+                                                <span class="badge bg-warning text-white">OUT</span>
                                             @else
                                                 <span class="badge" style="background: var(--color-secondary-light); color: var(--color-primary-dark);">ADJ</span>
                                             @endif

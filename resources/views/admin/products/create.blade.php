@@ -35,14 +35,18 @@
                             <div class="mb-4">
                                 <label for="barcode" class="form-label fw-semibold" style="color: var(--color-primary-dark);">{{ __('common.barcode') }}
                                     *</label>
-                                <div class="input-group">
+                                <div class="input-group " style="border-radius: 12px;">
+                                    <span class="input-group-text bg-white text-muted" style="border-radius: 12px 0 0 12px !important; border: 2px solid var(--color-secondary-light) !important; border-right: none !important; padding: 0.75rem 1rem;">
+                                        <i class="fa-solid fa-barcode"></i>
+                                    </span>
                                     <input type="text" class="form-control @error('barcode') is-invalid @enderror" id="barcode"
                                         name="barcode" value="{{ old('barcode') }}" placeholder="{{ __('common.barcode_placeholder') }}" required
-                                        style="border-radius: {{ App\Models\Setting::get('admin_enable_camera', true) ? '12px 0 0 12px' : '12px' }}; border: 2px solid var(--color-secondary-light); padding: 0.75rem 1rem; {{ App\Models\Setting::get('admin_enable_camera', true) ? 'border-right: none;' : '' }}">
-                                    @if(App\Models\Setting::get('admin_enable_camera', true))
-                                        <button class="btn btn-outline-secondary" type="button" id="btnScanner"
-                                            style="border: 2px solid var(--color-secondary-light); border-left: none; border-radius: 0 12px 12px 0; background: var(--brown-50); color: var(--color-primary-dark);">
-                                            <i class="fa-solid fa-camera"></i>
+                                        style="border: 2px solid var(--color-secondary-light) !important; border-left: none !important; border-radius: {{ App\Models\Setting::get('admin_enable_camera', true) && App\Models\Setting::get('enable_camera', true) ? '0 !important' : '0 12px 12px 0 !important' }}; {{ App\Models\Setting::get('admin_enable_camera', true) && App\Models\Setting::get('enable_camera', true) ? 'border-right: none !important;' : '' }} padding: 0.75rem 1rem; box-shadow: none; font-weight: 500; font-size: 1rem;">
+                                    @if(App\Models\Setting::get('admin_enable_camera', true) && App\Models\Setting::get('enable_camera', true))
+                                        <button class="btn d-flex align-items-center justify-content-center" type="button" id="btnScanner"
+                                            style="border-radius: 0 12px 12px 0 !important; background: var(--color-primary-dark) !important; border: 2px solid var(--color-primary-dark) !important; color: white !important; padding: 0 1.5rem; font-weight: 600; transition: all 0.2s; z-index: 2;"
+                                            onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter='brightness(1)'">
+                                            <i class="fa-solid fa-camera me-2"></i> Scan
                                         </button>
                                     @endif
                                 </div>

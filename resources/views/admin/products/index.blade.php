@@ -24,8 +24,82 @@
 		}
 
 		.category-select {
-			min-width: 200px;
-			border-radius: 12px;
+			min-width: 180px;
+			border-radius: 8px;
+			border: 1px solid #dee2e6;
+			font-size: 0.9rem;
+			height: 40px;
+			padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+			/* Standard Bootstrap form-select padding */
+			transition: border-color 0.2s;
+			color: var(--color-text);
+		}
+
+		.category-select:focus {
+			border-color: var(--color-primary);
+			box-shadow: 0 0 0 3px rgba(133, 105, 90, 0.1);
+			outline: none;
+		}
+
+		.search-container-capsule {
+			display: flex;
+			align-items: center;
+			background: #fff;
+			border: 1px solid #dee2e6;
+			border-radius: 8px;
+			padding: 4px 15px;
+			transition: border-color 0.2s;
+			position: relative;
+			height: 40px;
+		}
+
+		.search-container-capsule:focus-within {
+			border-color: var(--color-primary);
+			box-shadow: 0 0 0 3px rgba(133, 105, 90, 0.1);
+		}
+
+		.search-icon-main {
+			color: var(--gray-400);
+			font-size: 0.95rem;
+			margin-right: 12px;
+		}
+
+		.search-input-clean {
+			border: none !important;
+			background: transparent !important;
+			outline: none !important;
+			padding: 6px 0 !important;
+			font-size: 0.9rem !important;
+			color: var(--color-text) !important;
+			flex-grow: 1;
+			width: 100%;
+		}
+
+		.search-divider {
+			width: 1.5px;
+			height: 22px;
+			background: var(--gray-200);
+			margin: 0 12px;
+		}
+
+		.btn-scanner-clean {
+			background: transparent;
+			border: none;
+			padding: 4px;
+			color: #198754;
+			transition: transform 0.2s, color 0.2s;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.btn-scanner-clean:hover {
+			color: #157347;
+			transform: scale(1.15);
+		}
+
+		.btn-scanner-clean:active {
+			transform: scale(0.95);
 		}
 
 		.card-table {
@@ -71,29 +145,54 @@
 	</style>
 
 	<div class="container-fluid py-4">
-		<div class="page-header">
-			<div>
-				<h2 class="fw-bold mb-1" style="color: var(--color-primary-dark);"><i
-						class="fa-solid fa-box me-2"></i>{{ __('admin.product_management') }}</h2>
-				<!-- <p class="text-muted mb-0">{{ __('admin.product_management_subtitle') }}</p> -->
-			</div>
+		<div class="mb-4">
+			<h2 class="fw-bold mb-1" style="color: var(--color-primary-dark);"><i
+					class="fa-solid fa-box me-2"></i>{{ __('admin.product_management') }}</h2>
+			<p class="text-muted mb-0">{{ __('admin.product_management_subtitle') }}</p>
+		</div>
 
-			<div class="d-flex align-items-center">
-				<form action="{{ route('admin.products') }}" method="GET" class="search-filter me-3">
-					<div class="position-relative d-flex align-items-center">
-						<i class="fa-solid fa-magnifying-glass position-absolute"
-							style="left: 1rem; top: 50%; transform: translateY(-50%); opacity: 0.5;"></i>
-						<input name="search" id="searchInput" class="search-input ps-5" type="text"
-							placeholder="{{ __('common.search_placeholder') }}" value="{{ request('search') }}"
-							style="border-radius: {{ App\Models\Setting::get('admin_enable_camera', true) ? '12px 0 0 12px' : '12px' }}; {{ App\Models\Setting::get('admin_enable_camera', true) ? 'border-right: none;' : '' }}">
-						@if(App\Models\Setting::get('admin_enable_camera', true))
-							<button class="btn btn-outline-secondary" type="button" id="btnScanner"
-								style="border: 1px solid var(--brown-200); border-left: none; border-radius: 0 12px 12px 0; background: #fff; color: var(--color-primary-dark); padding: 0.5rem 0.75rem;">
+		<div class="card shadow-sm" style="border-radius: 16px; border: none;">
+			<div class="card-header bg-white p-4"
+				style="border-bottom: 2px solid var(--brown-100); border-radius: 16px 16px 0 0;">
+
+				<!-- Row 1: Title & Actions -->
+				<div class="d-flex justify-content-between align-items-center mb-4">
+					<h5 class="mb-0 fw-bold" style="color: var(--color-primary-dark);"><i
+							class="fa-solid fa-list-check me-2"></i>{{ __('admin.product_list') }}
+					</h5>
+
+					<div class="d-flex align-items-center gap-2">
+						<button class="btn btn-light border shadow-sm d-inline-flex align-items-center"
+							data-bs-toggle="modal" data-bs-target="#excelImportModal"
+							style="border-radius: 8px; padding: 0.5rem 1rem; font-weight: 500; height: 40px; color: var(--color-text); transition: all 0.2s;">
+							<i class="fa-solid fa-file-import me-2"></i> Import
+						</button>
+						<a href="{{ route('admin.products.create') }}"
+							class="btn btn-primary shadow-sm d-inline-flex align-items-center"
+							style="background: var(--color-primary-dark); border:none; border-radius:8px; padding:0.5rem 1.25rem; font-weight: 500; height: 40px; transition: all 0.2s;">
+							<i class="fa-solid fa-plus me-2"></i> {{ __('admin.add_product') }}
+						</a>
+					</div>
+				</div>
+
+				<!-- Row 2: Search & Filters -->
+				<form action="{{ route('admin.products') }}" method="GET" class="d-flex align-items-center gap-3 w-100">
+					@php
+						$placeholder = __('common.search_placeholder');
+					@endphp
+					<div class="search-container-capsule flex-grow-1">
+						<i class="fa-solid fa-magnifying-glass search-icon-main"></i>
+						<input type="text" name="search" id="searchInput" class="search-input-clean"
+							placeholder="{{ $placeholder }}" value="{{ request('search') }}">
+						@if(App\Models\Setting::get('admin_enable_camera', true) && App\Models\Setting::get('enable_camera', true))
+							<div class="search-divider"></div>
+							<button class="btn-scanner-clean" type="button" id="btnScanner" title="Scan Barcode">
 								<i class="fa-solid fa-camera"></i>
 							</button>
 						@endif
 					</div>
-					<select name="category_id" class="form-select category-select" onchange="this.form.submit()">
+					<select name="category_id" class="form-select category-select flex-shrink-0"
+						onchange="this.form.submit()" style="width: auto; min-width: 220px;">
 						<option value="">{{ __('common.all_categories') }}</option>
 						@foreach($categories as $cat)
 							<option value="{{ $cat->id }}" {{ request('category_id') == $cat->id ? 'selected' : '' }}>
@@ -102,28 +201,11 @@
 						@endforeach
 					</select>
 				</form>
-
-				<div class="d-flex align-items-center gap-2">
-					<button class="btn btn-outline-primary shadow-sm d-inline-flex align-items-center"
-						data-bs-toggle="modal" data-bs-target="#excelImportModal"
-						style="border-radius: 12px; padding: 0.6rem 1rem; font-weight: 600; height: fit-content; border: 1px solid var(--color-primary);">
-						<i class="fa-solid fa-file-import me-2"></i> Import
-					</button>
-					<a href="{{ route('admin.products.create') }}"
-						class="btn btn-primary shadow-sm d-inline-flex align-items-center"
-						style="background: var(--color-primary-dark); border:none; border-radius:12px; padding:0.6rem 1rem; font-weight: 600; height: fit-content;">
-						<i class="fa-solid fa-plus me-1"></i> {{ __('admin.add_product') }}
-					</a>
-				</div>
 			</div>
-		</div>
-
-
-		<div class="card card-table shadow-sm">
 			<div class="card-body p-0">
 				<div class="table-responsive">
 					<table class="table table-hover align-middle mb-0">
-						<thead style="background: var(--brown-100);">
+						<thead style="background: var(--brown-50);">
 							<tr>
 								<th class="ps-4 border-0 fw-semibold" style="color:var(--color-primary-dark);">
 									{{ __('common.product') }}
@@ -161,12 +243,14 @@
 									data-category="{{ $product->category->name ?? '' }}">
 									<td class="ps-4">
 										<div class="d-flex align-items-center">
-											<div class="me-3 product-badge" style="{{ $product->image && file_exists(public_path($product->image)) ? 'background: transparent;' : '' }}">
-                                                @if($product->image && file_exists(public_path($product->image)))
-                                                    <img src="{{ asset($product->image) }}" alt="{{ $product->name }}" style="width: 100%; height: 100%; object-fit: contain; border-radius: 10px;">
-                                                @else
-												    <i class="fa-solid fa-box"></i>
-                                                @endif
+											<div class="me-3 product-badge"
+												style="{{ $product->image && file_exists(public_path($product->image)) ? 'background: transparent;' : '' }}">
+												@if($product->image && file_exists(public_path($product->image)))
+													<img src="{{ asset($product->image) }}" alt="{{ $product->name }}"
+														style="width: 100%; height: 100%; object-fit: contain; border-radius: 10px;">
+												@else
+													<i class="fa-solid fa-box"></i>
+												@endif
 											</div>
 											<div>
 												<div class="fw-bold" style="color:var(--color-primary-dark);">

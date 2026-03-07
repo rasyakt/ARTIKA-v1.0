@@ -26,7 +26,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Schema::defaultStringLength(191);
-        if (str_contains(request()->getHost(), 'ngrok-free.dev')) {
+        if (str_contains(request()->getHost(), 'ngrok-free.dev') || request()->getHost() === 'artika.smkn1ciamis.id') {
             URL::forceScheme('https');
         }
 

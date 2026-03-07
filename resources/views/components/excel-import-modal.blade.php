@@ -57,8 +57,8 @@
                 </div>
 
                 <div class="modal-footer border-top-0 bg-light px-4 py-3">
-                    <button type="button" class="btn btn-outline-secondary fw-600 rounded-pill px-4"
-                        data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-light px-4"
+                        data-bs-dismiss="modal" style="border-radius: 10px; padding: 0.6rem 1.25rem">Batal</button>
                     <button type="submit"
                         class="btn btn-primary fw-600 rounded-pill px-4 d-flex align-items-center gap-2"
                         id="btnImportSubmit">

@@ -62,7 +62,7 @@
                             <label class="small text-muted d-block mb-1">{{ __('common.status') }}</label>
                             @php
                                 $badgeClass = match ($preOrder->status) {
-                                    'pending' => 'bg-warning text-dark',
+                                    'pending' => 'bg-warning text-white',
                                     'ordered' => 'bg-info text-white',
                                     'shipped' => 'bg-primary text-white',
                                     'received' => 'bg-success text-white',

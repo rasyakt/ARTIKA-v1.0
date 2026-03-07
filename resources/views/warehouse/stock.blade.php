@@ -11,27 +11,120 @@
 
         <!-- Stock Table -->
         <div class="card shadow-sm" style="border-radius: 16px; border: none;">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3"
+            <div class="card-header bg-white p-4"
                 style="border-bottom: 2px solid var(--brown-100); border-radius: 16px 16px 0 0;">
-                <h5 class="mb-0 fw-bold" style="color: var(--color-primary-dark);"><i
-                        class="fa-solid fa-clipboard-list me-2"></i>{{ __('warehouse.stock_levels') }}
-                </h5>
-                <div class="d-flex align-items-center">
-                    <form action="{{ route('warehouse.stock') }}" method="GET" class="me-2">
-                        <div class="input-group">
-                            <input type="text" name="search" id="warehouseSearchInput" class="form-control form-control-sm"
-                                placeholder="{{ __('common.search_placeholder') }}" value="{{ $search ?? '' }}"
-                                style="border-radius: {{ App\Models\Setting::get('admin_enable_camera', true) ? '10px 0 0 10px' : '10px' }}; border: 1px solid var(--color-secondary-light); min-width: 200px; {{ App\Models\Setting::get('admin_enable_camera', true) ? 'border-right: none;' : '' }}">
-                            @if(App\Models\Setting::get('admin_enable_camera', true))
-                                <button class="btn btn-sm btn-outline-secondary" type="button" id="btnScanner"
-                                    style="border: 1px solid var(--color-secondary-light); border-left: none; border-radius: 0 10px 10px 0; background: var(--brown-50); color: var(--color-primary-dark);">
-                                    <i class="fa-solid fa-camera"></i>
-                                </button>
-                            @endif
-                        </div>
-                    </form>
+
+                <!-- Row 1: Title & Actions -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="mb-0 fw-bold" style="color: var(--color-primary-dark);"><i
+                            class="fa-solid fa-clipboard-list me-2"></i>{{ __('warehouse.stock_levels') }}
+                    </h5>
+
+                    <!-- Space for future action buttons (e.g., Export) -->
+                    <div class="d-flex align-items-center gap-2">
+
+                    </div>
                 </div>
+
+                <style>
+                    .category-select {
+                        border-radius: 8px;
+                        border: 1px solid #dee2e6;
+                        font-size: 0.9rem;
+                        height: 40px;
+                        padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+                        /* Ensures text is vertically centered */
+                        transition: border-color 0.2s;
+                        color: var(--color-text);
+                    }
+
+                    .category-select:focus {
+                        border-color: var(--color-primary);
+                        box-shadow: 0 0 0 3px rgba(133, 105, 90, 0.1);
+                        outline: none;
+                    }
+                </style>
+                <!-- Row 2: Search & Filters -->
+                <form action="{{ route('warehouse.stock') }}" method="GET" class="d-flex align-items-center gap-3 w-100">
+                    @php
+                        $placeholder = __('common.search_placeholder');
+                    @endphp
+                    <div class="search-container-capsule flex-grow-1">
+                        <i class="fa-solid fa-magnifying-glass search-icon-main"></i>
+                        <input type="text" name="search" id="warehouseSearchInput" class="search-input-clean"
+                            placeholder="{{ $placeholder }}" value="{{ $search ?? '' }}">
+                        @if(App\Models\Setting::get('admin_enable_camera', true) && App\Models\Setting::get('enable_camera', true))
+                            <div class="search-divider"></div>
+                            <button class="btn-scanner-clean" type="button" id="btnScanner" title="Scan Barcode">
+                                <i class="fa-solid fa-camera"></i>
+                            </button>
+                        @endif
+                    </div>
+                </form>
             </div>
+
+            <style>
+                .search-container-capsule {
+                    display: flex;
+                    align-items: center;
+                    background: #fff;
+                    border: 1px solid #dee2e6;
+                    border-radius: 8px;
+                    padding: 4px 15px;
+                    transition: border-color 0.2s;
+                    position: relative;
+                    height: 40px;
+                }
+
+                .search-container-capsule:focus-within {
+                    border-color: var(--color-primary);
+                    box-shadow: 0 0 0 3px rgba(133, 105, 90, 0.1);
+                }
+
+                .search-icon-main {
+                    color: var(--gray-400);
+                    font-size: 0.95rem;
+                    margin-right: 12px;
+                }
+
+                .search-input-clean {
+                    border: none !important;
+                    background: transparent !important;
+                    outline: none !important;
+                    padding: 6px 0 !important;
+                    font-size: 0.9rem !important;
+                    color: var(--color-text) !important;
+                    flex-grow: 1;
+                    width: 100%;
+                }
+
+                .search-divider {
+                    width: 1.5px;
+                    height: 22px;
+                    background: var(--gray-200);
+                    margin: 0 12px;
+                }
+
+                .btn-scanner-clean {
+                    background: transparent;
+                    border: none;
+                    padding: 4px;
+                    color: #198754;
+                    transition: transform 0.2s, color 0.2s;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .btn-scanner-clean:hover {
+                    color: #157347;
+                    transform: scale(1.15);
+                }
+
+                .btn-scanner-clean:active {
+                    transform: scale(0.95);
+                }
+            </style>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
@@ -41,7 +134,8 @@
                                     {{ __('common.product') }}
                                 </th>
                                 <th class="border-0 fw-semibold" style="color: var(--color-primary-dark);">
-                                    {{ __('warehouse.batch_no') }}</th>
+                                    {{ __('warehouse.batch_no') }}
+                                </th>
                                 <th class="border-0 fw-semibold" style="color: var(--color-primary-dark);">
                                     {{ __('warehouse.expired_at') }}
                                 </th>
@@ -61,7 +155,8 @@
                                 <tr>
                                     <td class="ps-4">
                                         <div class="fw-bold" style="color: var(--color-primary-dark);">
-                                            {{ $stock->product->name }}</div>
+                                            {{ $stock->product->name }}
+                                        </div>
                                         <small class="text-muted">{{ $stock->product->barcode }}</small>
                                         <span class="badge ms-1"
                                             style="background: var(--color-secondary-light); color: var(--color-primary-dark); font-size: 0.7rem;">
@@ -278,10 +373,17 @@
 
                         // 2. If not found on current page, search for it
                         if (!found) {
+                            // Assuming the search input and camera button are structured like this:
+                            // <form id="warehouseSearchForm">
+                            //   <div class="input-group flex-grow-1">
+                            //     <input type="search" id="warehouseSearchInput" class="form-control" placeholder="...">
+                            //     <button type="button" id="btnScanner" class="btn btn-outline-secondary"><i class="fa-solid fa-camera"></i></button>
+                            //   </div>
+                            // </form>
                             const input = document.getElementById('warehouseSearchInput');
                             if (input) {
                                 input.value = barcode;
-                                const form = input.form;
+                                const form = input.form; // Get the parent form of the input
                                 if (form) {
                                     const hiddenInput = document.createElement('input');
                                     hiddenInput.type = 'hidden';

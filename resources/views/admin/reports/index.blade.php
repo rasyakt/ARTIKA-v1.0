@@ -292,7 +292,7 @@
                     <div class="modal-footer bg-light border-top-0 rounded-bottom-4 px-4 pb-3">
                         <input type="hidden" name="format" id="exportFormat" value="">
 
-                        <button type="button" class="btn btn-light text-muted border-0 px-4"
+                        <button type="button" class="btn btn-danger border-0 px-4"
                             style="border-radius: 10px; padding: 0.6rem 1.25rem;"
                             data-bs-dismiss="modal">{{ __('admin.cancel') }}</button>
 

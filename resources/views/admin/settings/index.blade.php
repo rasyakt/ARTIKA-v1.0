@@ -44,7 +44,7 @@
                                     <h6 class="fw-bold mb-1" style="color: var(--color-primary-dark);">
                                         <i class="fa-solid fa-camera me-2"></i>{{ __('admin.camera_scanner') ?? 'Scanner Kamera Barcode' }}
                                     </h6>
-                                    <p class="text-muted small mb-0">{{ __('admin.camera_scanner_hint') ?? 'Gunakan kamera perangkat (HP/Tablet) untuk scan barcode produk di halaman Kasir.' }}</p>
+                                    <p class="text-muted small mb-0">{{ __('admin.camera_scanner_hint') ?? 'Gunakan kamera perangkat (HP/Tablet) untuk scan barcode produk di halaman Kasir, Produk, dan Stok Gudang.' }}</p>
                                 </div>
                                 <div class="form-check form-switch custom-switch">
                                     <input class="form-check-input" type="checkbox" name="enable_camera" id="enable_camera"
