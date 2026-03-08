@@ -243,6 +243,7 @@ class CashierReportController extends Controller
             'change_amount' => $transaction->change_amount,
             'status' => $transaction->status,
             'total_refunded' => $transaction->total_refunded,
+            'payment_proof' => $transaction->payment_proof ? asset($transaction->payment_proof) : null,
             'items' => $transaction->items->map(function ($item) use ($transaction) {
                 return [
                     'product_id' => $item->product_id,

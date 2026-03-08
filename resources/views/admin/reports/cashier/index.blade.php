@@ -887,6 +887,14 @@
                                 <span class="text-muted small">Kembalian:</span>
                                 <span id="tx-change" class="text-dark small">Rp 0</span>
                             </div>
+
+                            <!-- Payment Proof Display -->
+                            <div class="mt-4 d-none" id="tx-proof-container">
+                                <label class="text-muted small d-block mb-2"><i class="fa-solid fa-image me-1"></i>Bukti Pembayaran</label>
+                                <a href="#" id="tx-proof-link" target="_blank" class="d-block border rounded overflow-hidden" style="max-height: 200px; text-align: center; background: #f8f9fa;">
+                                    <img id="tx-proof-img" src="" alt="Bukti Pembayaran" style="max-height: 200px; max-width: 100%; object-fit: contain;">
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1255,6 +1263,20 @@
 
                             document.getElementById('tx-cash-received').textContent = `Rp ${formatIDR(data.cash_amount)}`;
                             document.getElementById('tx-change').textContent = `Rp ${formatIDR(data.change_amount)}`;
+
+                            // Display Payment Proof if available
+                            const proofContainer = document.getElementById('tx-proof-container');
+                            const proofImg = document.getElementById('tx-proof-img');
+                            const proofLink = document.getElementById('tx-proof-link');
+                            if (data.payment_proof) {
+                                proofImg.src = data.payment_proof;
+                                proofLink.href = data.payment_proof;
+                                proofContainer.classList.remove('d-none');
+                            } else {
+                                proofContainer.classList.add('d-none');
+                                proofImg.src = '';
+                                proofLink.href = '#';
+                            }
 
                             // Return Button Logic
                             const btnReturn = document.getElementById('btn-initiate-return-tx');
