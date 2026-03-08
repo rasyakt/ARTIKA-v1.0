@@ -202,9 +202,8 @@ class TransactionService
             ]);
 
             // 3. Update Transaction Status
-            $transaction->update(['status' => 'rolled_back']);
-
-            return $transaction;
+            $transaction->status = 'canceled';
+            $transaction->save();
         });
     }
 

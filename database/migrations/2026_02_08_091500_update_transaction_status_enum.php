@@ -16,7 +16,7 @@ return new class extends Migration {
             DB::statement('ALTER TABLE transactions DROP CONSTRAINT IF EXISTS transactions_status_check');
             // Add new check constraint
             DB::statement("ALTER TABLE transactions ADD CONSTRAINT transactions_status_check CHECK (status IN ('pending', 'completed', 'canceled', 'partial_return', 'returned'))");
-        } else {
+        } elseif (in_array(DB::getDriverName(), ['mysql', 'mariadb'])) {
             // MySQL/MariaDB raw statement
             DB::statement("ALTER TABLE `transactions` MODIFY COLUMN `status` ENUM('pending', 'completed', 'canceled', 'partial_return', 'returned') DEFAULT 'pending'");
         }
@@ -30,7 +30,7 @@ return new class extends Migration {
         if (DB::getDriverName() === 'pgsql') {
             DB::statement('ALTER TABLE transactions DROP CONSTRAINT IF EXISTS transactions_status_check');
             DB::statement("ALTER TABLE transactions ADD CONSTRAINT transactions_status_check CHECK (status IN ('pending', 'completed', 'canceled'))");
-        } else {
+        } elseif (in_array(DB::getDriverName(), ['mysql', 'mariadb'])) {
             DB::statement("ALTER TABLE `transactions` MODIFY COLUMN `status` ENUM('pending', 'completed', 'canceled') DEFAULT 'pending'");
         }
     }

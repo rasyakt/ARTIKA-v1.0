@@ -1,0 +1,27 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+
+    paths:
+        - app/
+
+    # Level 9 is the highest level
+    level: 5
+
+    ignoreErrors:
+        - '#Access to an undefined property [a-zA-Z0-9_\\]+::\$[a-zA-Z0-9_]+.#'
+        - '#Expression on left side of \?\? is not nullable.#'
+        - '#Access to protected property [a-zA-Z0-9_\\]+\|Illuminate\\Database\\Eloquent\\Collection.*::\$[a-zA-Z0-9_]+.#'
+        - '#Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection.*::map\(\) contains unresolvable type.#'
+        - '#Parameter \#1 \$view of function view expects view-string\|null, string given.#'
+        - '#Anonymous function has an unused use.*#'
+        - '#Parameter \#1 \$num of function number_format expects float, string given.#'
+        - '#Called .pluck. on Laravel collection, but could have been retrieved as a query.#'
+        - '#Variable \$.* might not be defined.#'
+        - '#Parameter \#1 \$string of function str_pad expects string, int.* given.#'
+        - '#Strict comparison using [!|=]+ between.*#'
+        - '#Call to function is_string\(\) with Carbon\\Carbon will always evaluate to false.#'
+
+    excludePaths:
+        - ./*/*/FileToBeExcluded.php
