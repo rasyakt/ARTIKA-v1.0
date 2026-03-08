@@ -13,6 +13,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
 
+        // Exclude maintenance bypass cookie from encryption so the pre-boot
+        // maintenance.php check in public/index.php can read it correctly.
+        $middleware->encryptCookies(except: [
+            'laravel_maintenance',
+        ]);
+
         $middleware->web(append: [
             \App\Http\Middleware\SetLanguage::class,
             \App\Http\Middleware\ShareRoutePrefix::class,

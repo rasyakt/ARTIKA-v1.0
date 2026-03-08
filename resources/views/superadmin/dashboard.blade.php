@@ -15,9 +15,8 @@
             <div class="alert alert-warning border-0 shadow-sm mb-4"
                 style="border-radius: 12px; border-left: 5px solid var(--color-warning);">
                 <h6 class="fw-bold mb-1"><i class="fa-solid fa-triangle-exclamation me-2"></i>Maintenance Mode is Active</h6>
-                <p class="small mb-0">The application is currently locked. To access the site, you must use your secret token.
-                    If you lose it, check the latest entries in the <strong>System Logs</strong> or run
-                    <code>php artisan up</code> in the terminal.</p>
+                <p class="small mb-0">Aplikasi sedang dalam mode maintenance. Hanya browser ini yang memiliki akses bypass.
+                    Untuk menonaktifkan dari terminal, jalankan <code>php artisan up</code>.</p>
             </div>
         @endif
 
@@ -187,20 +186,87 @@
         ? 'The application is currently offline for users.'
         : 'Lock access to the application for all users except developers.' }}
                         </p>
-                        <form action="{{ route('superadmin.toggle-maintenance') }}" method="POST">
+                        <form action="{{ route('superadmin.toggle-maintenance') }}" method="POST" id="maintenanceForm">
                             @csrf
+                            <input type="hidden" name="password" id="maintenancePassword">
                             @if($systemInfo['is_maintenance'])
                                 <button type="submit" class="btn btn-light w-100 fw-bold"
                                     style="border-radius: 12px; color: var(--color-danger);">
                                     Go Live Now
                                 </button>
                             @else
-                                <button type="submit" class="btn btn-danger w-100" style="border-radius: 12px;"
-                                    onclick="return confirm('Enable maintenance mode? All public users will be locked out.')">
+                                <button type="button" class="btn btn-danger w-100" style="border-radius: 12px; color: white;"
+                                    onclick="askMaintenancePassword()">
                                     Enable Maintenance
                                 </button>
                             @endif
                         </form>
+
+                        @if(!$systemInfo['is_maintenance'])
+                        <script>
+                            function askMaintenancePassword() {
+                                Swal.fire({
+                                    title: '<i class="fa-solid fa-shield-halved" style="color: var(--color-primary); margin-bottom: 0.5rem; font-size: 1.5rem;"></i><br>Verifikasi Keamanan',
+                                    html: '<p style="color: var(--gray-600); font-size: 0.9rem; margin-bottom: 0;">Masukkan password akun Anda untuk mengaktifkan <strong>Maintenance Mode</strong>.</p>',
+                                    input: 'password',
+                                    inputPlaceholder: '••••••••',
+                                    inputAttributes: {
+                                        autocapitalize: 'off',
+                                        autocomplete: 'current-password',
+                                        style: 'border-radius: 12px; border: 2px solid var(--brown-200); padding: 0.75rem 1rem; font-size: 1rem; text-align: center; letter-spacing: 3px;'
+                                    },
+                                    showCancelButton: true,
+                                    confirmButtonText: '<i class="fa-solid fa-lock me-2"></i>Konfirmasi & Aktifkan',
+                                    cancelButtonText: 'Batal',
+                                    customClass: {
+                                        popup: 'artika-swal-popup',
+                                        title: 'artika-swal-title',
+                                        confirmButton: 'artika-swal-confirm-btn',
+                                        cancelButton: 'artika-swal-cancel-btn',
+                                    },
+                                    buttonsStyling: false,
+                                    showLoaderOnConfirm: true,
+                                    preConfirm: (password) => {
+                                        if (!password) {
+                                            Swal.showValidationMessage('Password tidak boleh kosong!');
+                                            return false;
+                                        }
+                                        return fetch("{{ route('superadmin.verify-password') }}", {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                'Accept': 'application/json'
+                                            },
+                                            body: JSON.stringify({ password: password })
+                                        })
+                                        .then(response => {
+                                            if (!response.ok) {
+                                                return response.json().then(data => {
+                                                    throw new Error(data.message || 'Password salah.');
+                                                });
+                                            }
+                                            return response.json();
+                                        })
+                                        .then(data => {
+                                            return password;
+                                        })
+                                        .catch(error => {
+                                            Swal.showValidationMessage(
+                                                `<i class="fa-solid fa-circle-xmark me-1"></i> ${error.message}`
+                                            );
+                                        });
+                                    },
+                                    allowOutsideClick: () => !Swal.isLoading()
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        document.getElementById('maintenancePassword').value = result.value;
+                                        document.getElementById('maintenanceForm').submit();
+                                    }
+                                });
+                            }
+                        </script>
+                        @endif
                     </div>
                 </div>
 

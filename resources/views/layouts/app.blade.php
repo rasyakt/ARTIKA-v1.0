@@ -483,6 +483,41 @@
             visibility: visible;
         }
 
+        /* Offline Banner */
+        .offline-banner {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--color-danger, #dc3545);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            z-index: 9999;
+            box-shadow: 0 10px 25px rgba(220, 53, 69, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .offline-banner.show {
+            top: 20px;
+        }
+
+        .offline-banner i {
+            font-size: 1.1rem;
+            animation: pulse-danger 2s infinite;
+        }
+
+        @keyframes pulse-danger {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
         /* Mobile Responsive */
         @media (max-width: 1023px) {
             .hamburger-btn {
@@ -1596,6 +1631,42 @@
                         });
                     }
                 </script>
+
+                {{-- Offline Detector Banner --}}
+                <div id="offlineBanner" class="offline-banner">
+                    <i class="fa-solid fa-wifi" style="position: relative;">
+                        <span style="position: absolute; width: 120%; height: 2px; background: white; top: 50%; left: -10%; transform: rotate(-45deg); display: block;"></span>
+                    </i>
+                    <span>Koneksi Internet Terputus</span>
+                </div>
+
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const offlineBanner = document.getElementById('offlineBanner');
+
+                        // Function to handle connection changes
+                        function updateOnlineStatus() {
+                            if (navigator.onLine) {
+                                offlineBanner.classList.remove('show');
+                                // Optional: You could show a quick success toast here
+                                // showToast('success', 'Koneksi internet kembali stabil');
+                            } else {
+                                offlineBanner.classList.add('show');
+                            }
+                        }
+
+                        // Listen to browser online/offline events
+                        window.addEventListener('online', updateOnlineStatus);
+                        window.addEventListener('offline', updateOnlineStatus);
+
+                        // Check initial state on page load (just in case)
+                        if (!navigator.onLine) {
+                            updateOnlineStatus();
+                        }
+                    });
+                </script>
+
+
 
 </body>
 

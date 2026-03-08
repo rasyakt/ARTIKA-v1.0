@@ -521,6 +521,7 @@
 
     <!-- html2canvas for image generation (loaded from CDN) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -602,7 +603,12 @@
             } catch (err) {
                 if (err.name !== 'AbortError') {
                     console.error('Share failed:', err);
-                    alert('Share failed. Try using Download instead.');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Membagikan struk gagal. Coba gunakan fitur Download.',
+                        confirmButtonColor: '#85695a'
+                    });
                 }
             }
         }
@@ -616,7 +622,12 @@
                 downloadFromCanvas(canvas);
             } catch (err) {
                 console.error('Download failed:', err);
-                alert('Download failed. Please try again.');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal',
+                    text: 'Gagal mengunduh struk. Silakan coba lagi.',
+                    confirmButtonColor: '#85695a'
+                });
             }
         }
 

@@ -701,6 +701,7 @@ class ThemeHelper
         background-color: var(--color-primary) !important;
         border-radius: 10px !important;
         box-shadow: none !important;
+        color: var(--color-white) !important;
     }
     .swal2-cancel, .swal2-styled.swal2-cancel, .artika-swal-cancel-btn {
         background-color: var(--gray-200) !important;

@@ -254,7 +254,12 @@
                         if (typeof showToast === 'function') {
                             showToast('error', "{{ __('admin.category_has_expenses_error') }}");
                         } else {
-                            alert("{{ __('admin.category_has_expenses_error') }}");
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Oops...',
+                                text: "{{ __('admin.category_has_expenses_error') }}",
+                                customClass: { popup: 'artika-swal-popup' }
+                            });
                         }
                         return;
                     }

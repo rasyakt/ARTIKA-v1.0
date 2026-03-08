@@ -2457,7 +2457,7 @@
         <div class="modal-dialog modal-dialog-centered" style="max-width: 320px;">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h6 class="modal-title">{{ __('pos.cash_amount') }}</h6>
+                    <h6 class="modal-title text-white">{{ __('pos.cash_amount') }}</h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">

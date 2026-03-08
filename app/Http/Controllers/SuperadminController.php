@@ -72,20 +72,48 @@ class SuperadminController extends Controller
     {
         if (app()->isDownForMaintenance()) {
             Artisan::call('up');
-            return back()->with('success', 'Application is now LIVE.');
+
+            // Clear the bypass cookies
+            return back()
+                ->withCookie(cookie()->forget('laravel_maintenance'))
+                ->with('success', 'Application is now LIVE.');
         } else {
-            // Secret token to allow superadmin access while down
-            $token = bin2hex(random_bytes(8));
+            // Verify superadmin password before enabling maintenance mode
+            $password = $request->input('password');
+            if (!$password || !\Illuminate\Support\Facades\Hash::check($password, $request->user()->password)) {
+                return back()->with('error', 'Password salah. Maintenance Mode tidak diaktifkan.');
+            }
+
+            // Internal secret token (used for cookie HMAC only, never exposed as URL)
+            $token = bin2hex(random_bytes(16));
             Artisan::call('down', [
                 '--secret' => $token
             ]);
 
-            // Log the secret link for the developer
-            $secretUrl = url('/' . $token);
-            \Illuminate\Support\Facades\Log::warning("Maintenance Mode enabled by Superadmin. Bypass access via: " . $secretUrl);
+            \Illuminate\Support\Facades\Log::warning("Maintenance Mode enabled by Superadmin ID: " . $request->user()->id);
 
-            return back()->with('success', 'Application is now in MAINTENANCE MODE. Your secret bypass link is: ' . $secretUrl);
+            // Set the bypass cookie DIRECTLY on this browser — no shareable URL.
+            // Only this specific browser session gets maintenance bypass access.
+            $bypassCookie = \Illuminate\Foundation\Http\MaintenanceModeBypassCookie::create($token);
+
+            return back()
+                ->withCookie($bypassCookie)
+                ->with('success', 'Maintenance Mode berhasil diaktifkan. Hanya browser ini yang dapat mengakses website.');
         }
+    }
+
+    /**
+     * Verify Superadmin Password via AJAX.
+     */
+    public function verifyPassword(Request $request)
+    {
+        $request->validate(['password' => 'required|string']);
+
+        if (\Illuminate\Support\Facades\Hash::check($request->input('password'), $request->user()->password)) {
+            return response()->json(['valid' => true]);
+        }
+
+        return response()->json(['valid' => false, 'message' => 'Password yang Anda masukkan salah.'], 422);
     }
 
     /**
