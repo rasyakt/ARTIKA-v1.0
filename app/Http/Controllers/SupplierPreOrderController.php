@@ -35,6 +35,7 @@ class SupplierPreOrderController extends Controller
     {
         $request->validate([
             'supplier_id' => 'required|exists:suppliers,id',
+            'reference_number' => 'nullable|string|unique:supplier_pre_orders,reference_number',
             'expected_arrival_date' => 'nullable|date',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
@@ -53,10 +54,16 @@ class SupplierPreOrderController extends Controller
                 $totalAmount += $item['quantity'] * $item['pcs_per_unit'] * $item['unit_price'];
             }
 
+            // Generate reference number if empty
+            $referenceNumber = $request->reference_number;
+            if (empty($referenceNumber)) {
+                $referenceNumber = $this->generateReferenceNumber();
+            }
+
             $preOrder = SupplierPreOrder::create([
                 'uuid' => (string) Str::uuid(),
                 'supplier_id' => $request->supplier_id,
-                'reference_number' => $request->reference_number,
+                'reference_number' => $referenceNumber,
                 'status' => 'pending',
                 'expected_arrival_date' => $request->expected_arrival_date,
                 'total_amount' => $totalAmount,
@@ -152,8 +159,8 @@ class SupplierPreOrderController extends Controller
                     'quantity_before' => $qtyBefore,
                     'quantity_after' => $qtyAfter,
                     'quantity_change' => $incrementAmount,
-                    'reason' => 'Penerimaan Pre-order: ' . $preOrder->uuid . ' (' . $item->quantity . ' ' . $item->unit_name . ')',
-                    'reference' => 'PRE-ORDER-' . $preOrder->id,
+                    'reason' => 'Penerimaan Pre-order: ' . $preOrder->reference_number . ' (' . $item->quantity . ' ' . $item->unit_name . ')',
+                    'reference' => $preOrder->reference_number,
                 ]);
 
                 // 4. Create Supplier Purchase Record (Optional but recommended for compatibility)
@@ -164,7 +171,7 @@ class SupplierPreOrderController extends Controller
                     'quantity' => $incrementAmount,
                     'purchase_price' => $item->unit_price, // unit_price is now stored as price per Pcs (HPP)
                     'total_price' => $item->subtotal,
-                    'notes' => 'From Pre-order: ' . $preOrder->uuid . ' (' . $item->quantity . ' ' . $item->unit_name . ')',
+                    'notes' => 'Dari Pre-order: ' . $preOrder->reference_number . ' (' . $item->quantity . ' ' . $item->unit_name . ')',
                     'purchase_date' => now(),
                     'user_id' => Auth::id(),
                 ]);
@@ -196,5 +203,29 @@ class SupplierPreOrderController extends Controller
         }
 
         return view('admin.suppliers.pre_orders.print-faktur', compact('preOrder'));
+    }
+
+    /**
+     * Generate a unique reference number for Pre-Order.
+     * Format: PO-YYYYMMDD-XXXX (e.g. PO-20240308-0001)
+     */
+    private function generateReferenceNumber()
+    {
+        $prefix = 'PO-' . date('Ymd') . '-';
+        
+        // Get the last reference number for today
+        $lastOrder = SupplierPreOrder::where('reference_number', 'like', $prefix . '%')
+            ->orderBy('reference_number', 'desc')
+            ->first();
+
+        if ($lastOrder) {
+            // Extract the last 4 digits
+            $lastSequence = intval(substr($lastOrder->reference_number, -4));
+            $newSequence = str_pad($lastSequence + 1, 4, '0', STR_PAD_LEFT);
+        } else {
+            $newSequence = '0001';
+        }
+
+        return $prefix . $newSequence;
     }
 }

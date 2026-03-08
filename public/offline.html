@@ -4,78 +4,189 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Offline - ARTIKA POS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
+        :root {
+            --color-primary: #85695a;
+            --color-primary-dark: #5c4335;
+            --color-bg: #fdf8f6;
+            --color-text: #4a3728;
+            --color-gray: #8b7a6e;
+            --brown-50: #fcfaf8;
+            --brown-100: #f5ebe6;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: linear-gradient(135deg, #fdf8f6 0%, #f5ebe6 100%);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, var(--color-bg) 0%, var(--brown-100) 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            color: #4a3728;
-            padding: 20px;
+            color: var(--color-text);
+            padding: 24px;
         }
+
         .container {
             text-align: center;
-            max-width: 440px;
+            max-width: 480px;
+            width: 100%;
             background: white;
-            padding: 3rem 2rem;
-            border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(111, 88, 73, 0.1);
+            padding: 4rem 2.5rem;
+            border-radius: 32px;
+            box-shadow: 0 25px 50px -12px rgba(92, 67, 53, 0.15);
+            border: 1px solid rgba(133, 105, 90, 0.1);
+            position: relative;
+            overflow: hidden;
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .icon {
-            font-size: 4rem;
-            margin-bottom: 1.5rem;
-            display: block;
+
+        /* Decorative background element */
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -60px;
+            right: -60px;
+            width: 140px;
+            height: 140px;
+            background: var(--brown-50);
+            border-radius: 50%;
+            z-index: 0;
         }
+
+        .content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .icon-wrapper {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 120px;
+            height: 120px;
+            background: var(--brown-50);
+            color: var(--color-primary);
+            font-size: 3.5rem;
+            border-radius: 50%;
+            margin-bottom: 2.5rem;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02), 0 10px 25px rgba(133, 105, 90, 0.12);
+            animation: float 3s ease-in-out infinite;
+        }
+
         h1 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 0.75rem;
-            color: #6F5849;
+            font-size: 1.85rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: var(--color-primary-dark);
+            letter-spacing: -0.02em;
         }
+
         p {
-            font-size: 1rem;
-            color: #8b7a6e;
+            font-size: 1.05rem;
+            color: var(--color-gray);
             line-height: 1.6;
-            margin-bottom: 2rem;
+            margin-bottom: 2.5rem;
         }
-        .retry-btn {
-            display: inline-block;
-            background: linear-gradient(135deg, #6F5849 0%, #85695a 100%);
+
+        .btn-retry {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--color-primary);
             color: white;
-            padding: 0.85rem 2rem;
-            border-radius: 12px;
+            padding: 1rem 2.5rem;
+            border-radius: 16px;
             text-decoration: none;
-            font-weight: 600;
-            font-size: 1rem;
+            font-weight: 700;
+            font-size: 1.1rem;
             border: none;
             cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 12px rgba(111, 88, 73, 0.25);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 20px -5px rgba(133, 105, 90, 0.4);
         }
-        .retry-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(111, 88, 73, 0.3);
+
+        .btn-retry:hover {
+            background: var(--color-primary-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px -10px rgba(133, 105, 90, 0.5);
         }
-        .retry-btn:active { transform: translateY(0); }
+
+        .btn-retry:active {
+            transform: translateY(-1px);
+        }
+
         .brand {
-            margin-top: 2rem;
+            margin-top: 3.5rem;
+            font-size: 0.85rem;
+            color: #d1c4bc;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Auto-reload message */
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            background: #fff3f0;
+            color: #ff6b4a;
+            border-radius: 100px;
             font-size: 0.8rem;
-            color: #b8a99e;
-            font-weight: 600;
-            letter-spacing: 1px;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255, 107, 74, 0.1);
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <span class="icon">🛜</span>
-        <h1>Anda Sedang Offline</h1>
-        <p>Tidak ada koneksi internet. Pastikan perangkat Anda terhubung ke jaringan untuk menggunakan ARTIKA POS.</p>
-        <button class="retry-btn" onclick="window.location.reload()">Coba Lagi</button>
-        <div class="brand">ARTIKA POS</div>
+        <div class="content">
+            <div class="status-badge">
+                <i class="fa-solid fa-circle-nodes me-2"></i> KONEKSI TERPUTUS
+            </div>
+            
+            <div class="icon-wrapper">
+                <i class="fa-solid fa-wifi-slash"></i>
+            </div>
+            
+            <h1>Anda Sedang Offline</h1>
+            <p>Sepertinya perangkat Anda kehilangan koneksi internet. Pastikan jaringan sudah stabil untuk kembali menggunakan layanan kami.</p>
+            
+            <button class="btn-retry" onclick="location.reload()">
+                <i class="fa-solid fa-rotate-right"></i> COBA LAGI
+            </button>
+            
+            <div class="brand">ARTIKA POS</div>
+        </div>
     </div>
+
+    <script>
+        // Auto-reload when back online
+        window.addEventListener('online', () => {
+            const btn = document.querySelector('.btn-retry');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> MENYAMBUNGKAN...';
+            btn.style.background = '#28a745';
+            btn.style.boxShadow = '0 10px 20px -5px rgba(40, 167, 69, 0.4)';
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        });
+    </script>
 </body>
 </html>

@@ -47,7 +47,7 @@
                                     <td class="ps-4">
                                         <div class="fw-bold" style="color: var(--color-primary-dark);">{{ $supplier->name }}
                                         </div>
-                                        <small class="text-muted">{{ $supplier->address ?? '-' }}</small>
+                                        <!-- <small class="text-muted">{{ $supplier->address ?? '-' }}</small> -->
                                     </td>
                                     <td>{{ $supplier->phone ?? '-' }}</td>
                                     <td>{{ $supplier->email ?? '-' }}</td>

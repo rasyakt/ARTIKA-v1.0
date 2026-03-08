@@ -44,8 +44,16 @@
                             <div class="mb-3">
                                 <label class="form-label fw-semibold"
                                     style="color: var(--color-primary-dark);">{{ __('admin.reference_number') ?? 'Nomor Referensi' }}</label>
-                                <input type="text" name="reference_number" class="form-control custom-input"
-                                    placeholder="e.g. PO-2024-001">
+                                <input type="text" name="reference_number" 
+                                    class="form-control custom-input @error('reference_number') is-invalid @enderror"
+                                    value="{{ old('reference_number') }}"
+                                    placeholder="Kosongkan untuk auto-generate">
+                                <div class="form-text small" style="font-size: 0.75rem;">
+                                    Format: PO-YYYYMMDD-XXXX. Harus unik.
+                                </div>
+                                @error('reference_number')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
 
                             <div class="mb-3">
