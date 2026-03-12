@@ -2527,7 +2527,7 @@
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h6 class="modal-title"><i class="fas fa-list me-2"></i> Transaksi Tertunda</h6>
+                    <h6 class="modal-title text-white"><i class="fas fa-list me-2"></i> Transaksi Tertunda</h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-0">
@@ -3482,7 +3482,7 @@
                             promoBadgeHtml = `<div class="promo-badge pulsate-slow">-${Math.round(promo.value)}%</div>`;
                         } else {
                             promoPrice = Math.max(0, product.price - promo.value);
-                            promoBadgeHtml = `<div class="promo-badge pulsate-slow">-Rp${promo.value.toLocaleString('id-ID')}</div>`;
+                            promoBadgeHtml = `<div class="promo-badge pulsate-slow">-Rp${formatCurrency(promo.value)}</div>`;
                         }
                     }
                 }
@@ -3508,9 +3508,9 @@
                 }
 
                 const priceDisplay = (hasPromo && promoPrice < product.price) ?
-                    `<span class="text-decoration-line-through small me-1">Rp${product.price.toLocaleString('id-ID')}</span>
-                     <div class="discounted-price">Rp${promoPrice.toLocaleString('id-ID')}</div>` :
-                    `<div class="discounted-price">Rp${product.price.toLocaleString('id-ID')}</div>`;
+                    `<span class="text-decoration-line-through small me-1">Rp${formatCurrency(product.price)}</span>
+                     <div class="discounted-price">Rp${formatCurrency(promoPrice)}</div>` :
+                    `<div class="discounted-price">Rp${formatCurrency(product.price)}</div>`;
 
                 let imageWrapperHtml = '';
                 if ({{ \App\Models\Setting::get('cashier_enable_product_photos', true) ? 'true' : 'false' }}) {
@@ -3788,12 +3788,18 @@
                 },
                 body: formData
             })
-                .then(response => response.json())
+                .then(response => {
+                    if (response.status === 419) {
+                        throw new Error('CSRF_MISMATCH');
+                    }
+                    return response.json();
+                })
                 .then(result => {
                     checkoutBtn.innerHTML = originalText;
                     checkoutBtn.disabled = false;
 
                     if (result.success) {
+                        // ... existing success logic ...
                         const transaction_id = result.transaction_id || result.transaction?.id;
                         const change = result.change || 0;
                         const cashAmount = parseFloat(document.getElementById('keypadDisplay').value.replace(/[^0-9]/g, '')) || 0;
@@ -3853,7 +3859,23 @@
                     console.error('Fetch error:', error);
                     checkoutBtn.innerHTML = originalText;
                     checkoutBtn.disabled = false;
-                    showToast('error', error.message);
+                    
+                    if (error.message === 'CSRF_MISMATCH') {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Sesi Diperbarui',
+                            text: 'Sesi Anda telah diperbarui (mungkin Anda login di perangkat lain). Silakan segarkan halaman untuk melanjutkan.',
+                            confirmButtonText: 'Segarkan Halaman',
+                            showCancelButton: true,
+                            cancelButtonText: 'Batal'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.reload();
+                            }
+                        });
+                    } else {
+                        showToast('error', error.message);
+                    }
                 });
         }
 
@@ -3891,7 +3913,12 @@
                             note: ''
                         })
                     })
-                        .then(response => response.json())
+                        .then(response => {
+                            if (response.status === 419) {
+                                throw new Error('CSRF_MISMATCH');
+                            }
+                            return response.json();
+                        })
                         .then(result => {
                             btnHold.disabled = false;
                             btnHold.innerHTML = originalText;
@@ -3903,10 +3930,27 @@
                                 showToast('error', 'Gagal menunda transaksi: ' + result.message);
                             }
                         })
-                        .catch(err => {
+                        .catch(error => {
                             btnHold.disabled = false;
                             btnHold.innerHTML = originalText;
-                            showToast('error', 'Terjadi kesalahan sistem');
+                            console.error('Hold error:', error);
+                            
+                            if (error.message === 'CSRF_MISMATCH') {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Sesi Diperbarui',
+                                    text: 'Sesi Anda telah diperbarui (mungkin Anda login di perangkat lain). Silakan segarkan halaman untuk melanjutkan.',
+                                    confirmButtonText: 'Segarkan Halaman',
+                                    showCancelButton: true,
+                                    cancelButtonText: 'Batal'
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        window.location.reload();
+                                    }
+                                });
+                            } else {
+                                showToast('error', 'Terjadi kesalahan sistem');
+                            }
                         });
                 }
             });
