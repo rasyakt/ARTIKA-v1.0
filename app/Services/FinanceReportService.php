@@ -20,47 +20,79 @@ class FinanceReportService
         $startDate = $startDate ? Carbon::parse($startDate)->startOfDay() : Carbon::now()->startOfMonth();
         $endDate = $endDate ? Carbon::parse($endDate)->endOfDay() : Carbon::now()->endOfDay();
 
-        // 1. Gross Revenue (Total Sales)
-        $grossRevenue = Transaction::whereBetween('created_at', [$startDate, $endDate])
-            ->where('status', 'completed')
-            ->sum('total_amount');
-
-        // 2. COGS (Cost of Goods Sold)
-        // Calculated as items.quantity * products.cost_price
-        $cogs = TransactionItem::join('transactions', 'transaction_items.transaction_id', '=', 'transactions.id')
+        // 1. Gross Revenue (Total Sales) - Split into Retail and Consignment
+        $salesData = TransactionItem::join('transactions', 'transaction_items.transaction_id', '=', 'transactions.id')
             ->join('products', 'transaction_items.product_id', '=', 'products.id')
             ->whereBetween('transactions.created_at', [$startDate, $endDate])
             ->where('transactions.status', 'completed')
+            ->select(
+                DB::raw('SUM(CASE WHEN products.is_consignment = 1 THEN transaction_items.quantity * transaction_items.price ELSE 0 END) as consignment_revenue'),
+                DB::raw('SUM(CASE WHEN products.is_consignment = 0 THEN transaction_items.quantity * transaction_items.price ELSE 0 END) as retail_revenue'),
+                DB::raw('SUM(transaction_items.quantity * transaction_items.price) as total_revenue')
+            )
+            ->first();
+
+        $grossRevenue = (float) ($salesData->total_revenue ?? 0);
+        $consignmentRevenue = (float) ($salesData->consignment_revenue ?? 0);
+        $retailRevenue = (float) ($salesData->retail_revenue ?? 0);
+
+        // 2. COGS (Cost of Goods Sold)
+        // Retail COGS: items.quantity * products.cost_price
+        $retailCogs = TransactionItem::join('transactions', 'transaction_items.transaction_id', '=', 'transactions.id')
+            ->join('products', 'transaction_items.product_id', '=', 'products.id')
+            ->whereBetween('transactions.created_at', [$startDate, $endDate])
+            ->where('transactions.status', 'completed')
+            ->where('products.is_consignment', false)
             ->select(DB::raw('SUM(transaction_items.quantity * products.cost_price) as total_cogs'))
             ->value('total_cogs') ?? 0;
 
-        // 3. Gross Profit
-        $grossProfit = $grossRevenue - $cogs;
+        // Consignment "Cost": items.quantity * (price - commission)
+        // This is the amount we owe the consignor.
+        // We calculate this by joining with the consignment logic or using the product's snapshot if commission is fixed.
+        // For simplicity and performance, we'll use the product's cost_price which we keep in sync for consignment items.
+        $consignmentCost = TransactionItem::join('transactions', 'transaction_items.transaction_id', '=', 'transactions.id')
+            ->join('products', 'transaction_items.product_id', '=', 'products.id')
+            ->whereBetween('transactions.created_at', [$startDate, $endDate])
+            ->where('transactions.status', 'completed')
+            ->where('products.is_consignment', true)
+            ->select(DB::raw('SUM(transaction_items.quantity * products.cost_price) as total_cost'))
+            ->value('total_cost') ?? 0;
 
-        // 4. Returns & Refunds
+        $cogs = $retailCogs + $consignmentCost;
+
+        // 3. Consignment Commission (Income from consignment)
+        $consignmentCommission = $consignmentRevenue - $consignmentCost;
+
+        // 4. Gross Profit
+        // Gross Profit = (Retail Revenue - Retail Cogs) + Consignment Commission
+        $grossProfit = ($retailRevenue - $retailCogs) + $consignmentCommission;
+
+        // 5. Returns & Refunds
         $totalReturns = ReturnTransaction::whereBetween('created_at', [$startDate, $endDate])
             ->sum('total_refund');
 
-        // 5. Operating Expenses
+        // 6. Operating Expenses
         $totalExpenses = Expense::whereBetween('date', [$startDate, $endDate])
             ->sum('amount');
 
-        // 6. Stock Procurement (New)
+        // 7. Stock Procurement
         $totalProcurement = SupplierPurchase::whereBetween('purchase_date', [$startDate, $endDate])
             ->sum('total_price');
 
-        // 7. Net Profit
-        // Net Profit = Gross Profit - Returns - Expenses
-        // Note: Stock procurement is usually not deducted from P&L net profit directly (it's in COGS),
-        // but we track it for cash flow awareness.
+        // 8. Net Profit
         $netProfit = $grossProfit - $totalReturns - $totalExpenses;
 
-        // 8. Profit Margin
+        // 9. Profit Margin
         $profitMargin = $grossRevenue > 0 ? ($netProfit / $grossRevenue) * 100 : 0;
 
         return [
             'gross_revenue' => $grossRevenue,
+            'retail_revenue' => $retailRevenue,
+            'consignment_revenue' => $consignmentRevenue,
+            'consignment_commission' => $consignmentCommission,
             'cogs' => $cogs,
+            'retail_cogs' => $retailCogs,
+            'consignment_cost' => $consignmentCost,
             'gross_profit' => $grossProfit,
             'total_returns' => $totalReturns,
             'total_expenses' => $totalExpenses,
@@ -78,24 +110,16 @@ class FinanceReportService
         $startDate = $startDate ? Carbon::parse($startDate)->startOfDay() : Carbon::now()->subDays(30)->startOfDay();
         $endDate = $endDate ? Carbon::parse($endDate)->endOfDay() : Carbon::now()->endOfDay();
 
-        $dailyData = Transaction::whereBetween('created_at', [$startDate, $endDate])
-            ->where('status', 'completed')
-            ->select(
-                DB::raw('DATE(created_at) as date'),
-                DB::raw('SUM(total_amount) as revenue')
-            )
-            ->groupBy(DB::raw('DATE(created_at)'))
-            ->get()
-            ->keyBy('date');
-
-        // We also need COGS per day
-        $dailyCogs = TransactionItem::join('transactions', 'transaction_items.transaction_id', '=', 'transactions.id')
+        $dailyData = TransactionItem::join('transactions', 'transaction_items.transaction_id', '=', 'transactions.id')
             ->join('products', 'transaction_items.product_id', '=', 'products.id')
             ->whereBetween('transactions.created_at', [$startDate, $endDate])
             ->where('transactions.status', 'completed')
             ->select(
                 DB::raw('DATE(transactions.created_at) as date'),
-                DB::raw('SUM(transaction_items.quantity * products.cost_price) as cogs')
+                DB::raw('SUM(transaction_items.quantity * transaction_items.price) as revenue'),
+                DB::raw('SUM(CASE WHEN products.is_consignment = 1 THEN transaction_items.quantity * transaction_items.price ELSE 0 END) as consignment_revenue'),
+                DB::raw('SUM(CASE WHEN products.is_consignment = 1 THEN transaction_items.quantity * products.cost_price ELSE 0 END) as consignment_cost'),
+                DB::raw('SUM(CASE WHEN products.is_consignment = 0 THEN transaction_items.quantity * products.cost_price ELSE 0 END) as retail_cogs')
             )
             ->groupBy(DB::raw('DATE(transactions.created_at)'))
             ->get()
@@ -130,18 +154,28 @@ class FinanceReportService
         $currentDate = clone $startDate;
         while ($currentDate <= $endDate) {
             $dateStr = $currentDate->format('Y-m-d');
-            $revenue = floatval($dailyData->get($dateStr)->revenue ?? 0);
-            $cogs = floatval($dailyCogs->get($dateStr)->cogs ?? 0);
+            $row = $dailyData->get($dateStr);
+            
+            $revenue = (float) ($row->revenue ?? 0);
+            $consignmentRevenue = (float) ($row->consignment_revenue ?? 0);
+            $consignmentCost = (float) ($row->consignment_cost ?? 0);
+            $retailCogs = (float) ($row->retail_cogs ?? 0);
+            
+            $consignmentCommission = $consignmentRevenue - $consignmentCost;
+            $grossProfit = ($revenue - $consignmentRevenue - $retailCogs) + $consignmentCommission;
+            
             $expense = floatval($dailyExpenses->get($dateStr)->cost ?? 0);
             $procurement = floatval($dailyProcurement->get($dateStr)->cost ?? 0);
 
             $result[] = [
                 'date' => $dateStr,
                 'revenue' => $revenue,
-                'cogs' => $cogs,
+                'cogs' => $retailCogs + $consignmentCost,
+                'consignment_commission' => $consignmentCommission,
                 'expenses' => $expense,
                 'procurement' => $procurement,
-                'profit' => $revenue - $cogs - $expense,
+                'profit' => $grossProfit - $expense, // This already handles returns? No, returns are global in summary usually. 
+                                                     // But for daily data we'll stick to simple profit.
             ];
             $currentDate->addDay();
         }

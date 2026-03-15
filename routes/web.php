@@ -132,6 +132,36 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('/audit/export', [\App\Http\Controllers\AuditController::class , 'export'])->name('audit.export');
                 Route::post('/audit/clear', [\App\Http\Controllers\AuditController::class , 'clear'])->name('audit.clear');
 
+                // Konsinyasi (Titip Jual)
+                Route::prefix('consignors')->name('consignors.')->group(function () {
+                    Route::get('/', [\App\Http\Controllers\ConsignorController::class, 'index'])->name('index');
+                    Route::post('/', [\App\Http\Controllers\ConsignorController::class, 'store'])->name('store');
+                    Route::get('/{consignor}', [\App\Http\Controllers\ConsignorController::class, 'show'])->name('show');
+                    Route::put('/{id}', [\App\Http\Controllers\ConsignorController::class, 'update'])->name('update');
+                    Route::delete('/{id}', [\App\Http\Controllers\ConsignorController::class, 'destroy'])->name('delete');
+                });
+
+                Route::prefix('consignment')->name('consignment.')->group(function () {
+                    // Barang Konsinyasi
+                    Route::get('/items', [\App\Http\Controllers\ConsignmentItemController::class, 'index'])->name('items.index');
+                    Route::post('/items', [\App\Http\Controllers\ConsignmentItemController::class, 'store'])->name('items.store');
+                    Route::put('/items/{id}', [\App\Http\Controllers\ConsignmentItemController::class, 'update'])->name('items.update');
+                    Route::post('/items/{id}/return', [\App\Http\Controllers\ConsignmentItemController::class, 'returnToConsignor'])->name('items.return');
+                    Route::delete('/items/{id}', [\App\Http\Controllers\ConsignmentItemController::class, 'destroy'])->name('items.delete');
+
+                    // Settlement
+                    Route::get('/settlements', [\App\Http\Controllers\ConsignmentSettlementController::class, 'index'])->name('settlements.index');
+                    Route::get('/settlements/create', [\App\Http\Controllers\ConsignmentSettlementController::class, 'create'])->name('settlements.create');
+                    Route::post('/settlements', [\App\Http\Controllers\ConsignmentSettlementController::class, 'store'])->name('settlements.store');
+                    Route::get('/settlements/{settlement}', [\App\Http\Controllers\ConsignmentSettlementController::class, 'show'])->name('settlements.show');
+                    Route::get('/settlements/{settlement}/pdf', [\App\Http\Controllers\ConsignmentSettlementController::class, 'printPdf'])->name('settlements.pdf');
+                    Route::post('/settlements/{settlement}/pay', [\App\Http\Controllers\ConsignmentSettlementController::class, 'markAsPaid'])->name('settlements.pay');
+
+                    // Laporan Konsinyasi
+                    Route::get('/reports', [\App\Http\Controllers\Admin\ConsignmentReportController::class, 'index'])->name('reports.index');
+                    Route::get('/reports/export', [\App\Http\Controllers\Admin\ConsignmentReportController::class, 'export'])->name('reports.export');
+                });
+
                 // Return Management
                 Route::get('/returns', [\App\Http\Controllers\Admin\ReturnController::class , 'index'])->name('returns.index');
                 Route::post('/returns', [\App\Http\Controllers\Admin\ReturnController::class , 'store'])->name('returns.store');

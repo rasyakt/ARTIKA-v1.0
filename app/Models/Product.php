@@ -23,12 +23,17 @@ class Product extends Model
         'description',
         'image',
         'is_active',
+        'is_favorite',
+        'is_consignment',
+        'consignor_id',
     ];
 
     protected $casts = [
-        'price' => 'decimal:2',
-        'cost_price' => 'decimal:2',
-        'is_active' => 'boolean',
+        'price'          => 'decimal:2',
+        'cost_price'     => 'decimal:2',
+        'is_active'      => 'boolean',
+        'is_favorite'    => 'boolean',
+        'is_consignment' => 'boolean',
     ];
 
     /**
@@ -117,6 +122,22 @@ class Product extends Model
     public function supplierPurchases(): HasMany
     {
         return $this->hasMany(SupplierPurchase::class);
+    }
+
+    /**
+     * Get the consignor (penitip) of this product if it's a consignment product
+     */
+    public function consignor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Consignor::class);
+    }
+
+    /**
+     * Get all consignment item records for this product
+     */
+    public function consignmentItems(): HasMany
+    {
+        return $this->hasMany(ConsignmentItem::class);
     }
 }
 

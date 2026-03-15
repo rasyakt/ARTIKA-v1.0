@@ -50,17 +50,15 @@
         <div class="row g-3 mb-4">
             <!-- Gross Revenue -->
             <div class="col-md col-sm-6">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body p-3">
-                        <div class="d-flex align-items-center mb-2">
-                            <div class="p-2 rounded-3 me-2"
-                                style="background: var(--brown-50); color: var(--color-primary-dark);">
-                                <i class="fa-solid fa-money-bill-trend-up"></i>
-                            </div>
-                            <p class="text-muted small mb-0 fw-semibold">{{ strtoupper(__('admin.gross_revenue')) }}</p>
+                <div class="card h-100 shadow-sm border-0" style="border-radius: 12px;">
+                    <div class="card-body p-3 text-center">
+                        <div class="mx-auto rounded-circle mb-2 d-flex align-items-center justify-content-center"
+                             style="width: 40px; height: 40px; background: var(--brown-50); color: var(--color-primary-dark);">
+                            <i class="fa-solid fa-money-bill-trend-up"></i>
                         </div>
-                        <h5 class="fw-bold mb-0" style="color: var(--brown-900); font-size: 1.1rem;">Rp
-                            {{ number_format($summary['gross_revenue'], 0, ',', '.') }}
+                        <p class="text-muted small mb-1 fw-semibold text-uppercase">{{ __('admin.gross_revenue') }}</p>
+                        <h5 class="fw-bold mb-0" style="color: var(--brown-900);">
+                            Rp {{ number_format($summary['gross_revenue'], 0, ',', '.') }}
                         </h5>
                     </div>
                 </div>
@@ -68,16 +66,31 @@
 
             <!-- Total Cost (COGS) -->
             <div class="col-md col-sm-6">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body p-3">
-                        <div class="d-flex align-items-center mb-2">
-                            <div class="p-2 rounded-3 me-2" style="background: #fff5f2; color: var(--color-accent-warm);">
-                                <i class="fa-solid fa-tags"></i>
-                            </div>
-                            <p class="text-muted small mb-0 fw-semibold">{{ strtoupper(__('admin.cogs')) }}</p>
+                <div class="card h-100 shadow-sm border-0" style="border-radius: 12px;">
+                    <div class="card-body p-3 text-center">
+                        <div class="mx-auto rounded-circle mb-2 d-flex align-items-center justify-content-center"
+                             style="width: 40px; height: 40px; background: #fff5f2; color: var(--color-accent-warm);">
+                            <i class="fa-solid fa-tags"></i>
                         </div>
-                        <h5 class="fw-bold mb-0" style="color: var(--brown-900); font-size: 1.1rem;">Rp
-                            {{ number_format($summary['cogs'], 0, ',', '.') }}
+                        <p class="text-muted small mb-1 fw-semibold text-uppercase">{{ __('admin.cogs') }}</p>
+                        <h5 class="fw-bold mb-0" style="color: var(--brown-900);">
+                            Rp {{ number_format($summary['cogs'], 0, ',', '.') }}
+                        </h5>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Consignment Commission (New) -->
+            <div class="col-md col-sm-6">
+                <div class="card h-100 shadow-sm border-0" style="border-top: 3px solid var(--color-success); border-radius: 12px;">
+                    <div class="card-body p-3 text-center">
+                        <div class="mx-auto rounded-circle mb-2 d-flex align-items-center justify-content-center"
+                             style="width: 40px; height: 40px; background: #dcfce7; color: var(--color-success);">
+                            <i class="fa-solid fa-hand-holding-dollar"></i>
+                        </div>
+                        <p class="text-muted small mb-1 fw-semibold text-uppercase">KOMISI KONSINYASI</p>
+                        <h5 class="fw-bold mb-0 text-success">
+                            Rp {{ number_format($summary['consignment_commission'], 0, ',', '.') }}
                         </h5>
                     </div>
                 </div>
@@ -85,57 +98,32 @@
 
             <!-- Operating Expenses -->
             <div class="col-md col-sm-6">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body p-3">
-                        <div class="d-flex align-items-center mb-2">
-                            <div class="p-2 rounded-3 me-2" style="background: #fef9c3; color: #a16207;">
-                                <i class="fa-solid fa-file-invoice-dollar"></i>
-                            </div>
-                            <p class="text-muted small mb-0 fw-semibold">{{ strtoupper(__('admin.operational_expenses')) }}
-                            </p>
+                <div class="card h-100 shadow-sm border-0" style="border-radius: 12px;">
+                    <div class="card-body p-3 text-center">
+                        <div class="mx-auto rounded-circle mb-2 d-flex align-items-center justify-content-center"
+                             style="width: 40px; height: 40px; background: #fef9c3; color: #a16207);">
+                            <i class="fa-solid fa-file-invoice-dollar"></i>
                         </div>
-                        <h5 class="fw-bold mb-0" style="color: var(--brown-900); font-size: 1.1rem;">Rp
-                            {{ number_format($summary['total_expenses'], 0, ',', '.') }}
-                        </h5>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Stock Procurement -->
-            <div class="col-md col-sm-6">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body p-3">
-                        <div class="d-flex align-items-center mb-2">
-                            <div class="p-2 rounded-3 me-2"
-                                style="background: #f3e8ff; color: var(--color-purple, #7e22ce);">
-                                <i class="fa-solid fa-truck-ramp-box"></i>
-                            </div>
-                            <p class="text-muted small mb-0 fw-semibold">{{ strtoupper(__('admin.stock_procurement')) }}</p>
-                        </div>
-                        <h5 class="fw-bold mb-0" style="color: var(--brown-900); font-size: 1.1rem;">Rp
-                            {{ number_format($summary['total_procurement'], 0, ',', '.') }}
+                        <p class="text-muted small mb-1 fw-semibold text-uppercase">BIAYA OPERASIONAL</p>
+                        <h5 class="fw-bold mb-0" style="color: var(--brown-900);">
+                            Rp {{ number_format($summary['total_expenses'], 0, ',', '.') }}
                         </h5>
                     </div>
                 </div>
             </div>
 
             <!-- Net Profit -->
-            <div class="col-md-3 col-sm-12">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <p class="text-muted small mb-1 fw-semibold">{{ strtoupper(__('admin.net_profit')) }}</p>
-                                <h4 class="fw-bold mb-0"
-                                    style="color: {{ $summary['net_profit'] >= 0 ? 'var(--color-success-dark)' : 'var(--color-danger-dark)' }}; font-size: 1.3rem;">
-                                    Rp {{ number_format($summary['net_profit'], 0, ',', '.') }}
-                                </h4>
-                            </div>
-                            <div class="p-2 rounded-4"
-                                style="background: {{ $summary['net_profit'] >= 0 ? 'var(--color-success-light)' : 'var(--color-danger-light)' }}; color: {{ $summary['net_profit'] >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }};">
-                                <i class="fa-solid fa-wallet fa-lg"></i>
-                            </div>
+            <div class="col-md col-sm-12">
+                <div class="card h-100 shadow-sm border-0 text-white" style="border-radius: 12px; background: linear-gradient(135deg, #059669, #10b981);">
+                    <div class="card-body p-3 text-center">
+                        <div class="mx-auto rounded-circle mb-2 d-flex align-items-center justify-content-center"
+                             style="width: 40px; height: 40px; background: rgba(255,255,255,0.2);">
+                            <i class="fa-solid fa-wallet"></i>
                         </div>
+                        <p class="small mb-1 fw-semibold text-uppercase text-white-50">{{ __('admin.net_profit') }}</p>
+                        <h4 class="fw-bold mb-0">
+                            Rp {{ number_format($summary['net_profit'], 0, ',', '.') }}
+                        </h4>
                     </div>
                 </div>
             </div>
@@ -144,20 +132,18 @@
         <div class="row g-4 mb-4">
             <!-- Profit Margin & Returns -->
             <div class="col-md-4">
-                <div class="card shadow-sm h-100">
-                    <div class="card-body">
+                <div class="card shadow-sm h-100 border-0" style="border-radius: 14px;">
+                    <div class="card-body p-4">
                         <h6 class="fw-bold mb-4" style="color: var(--color-primary-dark);">{{ __('admin.quick_info') }}</h6>
 
                         <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
                             <div>
                                 <div class="small text-muted mb-1">{{ __('admin.gross_profit') }}</div>
-                                <h5 class="fw-bold mb-0" style="color: var(--color-success);">
+                                <h5 class="fw-bold mb-0 text-success">
                                     Rp {{ number_format($summary['gross_profit'], 0, ',', '.') }}
                                 </h5>
                             </div>
-                            <div class="text-success opacity-25">
-                                <i class="fa-solid fa-sack-dollar fa-2x"></i>
-                            </div>
+                            <i class="fa-solid fa-sack-dollar fa-2x text-success opacity-25"></i>
                         </div>
 
                         <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
@@ -168,21 +154,17 @@
                                     {{ number_format($summary['profit_margin'], 2) }}%
                                 </h5>
                             </div>
-                            <div class="circular-progress-container">
-                                <i class="fa-solid fa-chart-line fa-2x opacity-25"></i>
-                            </div>
+                            <i class="fa-solid fa-chart-line fa-2x opacity-25" style="color: var(--color-primary);"></i>
                         </div>
 
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <div class="small text-muted mb-1">{{ __('admin.returns_refunds') }}</div>
-                                <h5 class="fw-bold mb-0 text-danger">- Rp
-                                    {{ number_format($summary['total_returns'], 0, ',', '.') }}
+                                <div class="small text-muted mb-1">PENGADAAN STOK (KAS)</div>
+                                <h5 class="fw-bold mb-0 text-purple" style="color: #9333ea;">
+                                    Rp {{ number_format($summary['total_procurement'], 0, ',', '.') }}
                                 </h5>
                             </div>
-                            <div class="text-danger opacity-25">
-                                <i class="fa-solid fa-rotate-left fa-2x"></i>
-                            </div>
+                            <i class="fa-solid fa-truck-ramp-box fa-2x opacity-25" style="color: #9333ea;"></i>
                         </div>
                     </div>
                 </div>
@@ -190,13 +172,10 @@
 
             <!-- Trend Chart -->
             <div class="col-md-8">
-                <div class="card shadow-sm h-100">
-                    <div class="card-header border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
-                        <h6 class="fw-bold mb-0" style="color: var(--color-primary-dark);">{{ __('admin.financial_trend') }}
-                        </h6>
-                        <div id="chart-controls" class="btn-group btn-group-sm">
-                            <!-- Toggle buttons will be injected or managed via CSS/JS -->
-                        </div>
+                <div class="card shadow-sm h-100 border-0" style="border-radius: 14px;">
+                    <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                        <h6 class="fw-bold mb-0" style="color: var(--color-primary-dark);">{{ __('admin.financial_trend') }}</h6>
+                        <div id="chart-controls" class="btn-group btn-group-sm"></div>
                     </div>
                     <div class="card-body px-4">
                         <div style="height: 300px;">
@@ -208,22 +187,22 @@
         </div>
 
         <!-- Detailed Daily Data -->
-        <div class="card shadow-sm" id="daily-profit-section">
-            <div class="card-header border-0 pt-4 px-4">
+        <div class="card shadow-sm border-0" id="daily-profit-section" style="border-radius: 14px;">
+            <div class="card-header bg-transparent border-0 pt-4 px-4">
                 <h6 class="fw-bold mb-0" style="color: var(--color-primary-dark);">{{ __('admin.daily_profit') }}</h6>
             </div>
-            <div class="card-body">
+            <div class="card-body p-4">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle">
+                    <table class="table table-hover align-middle border-0">
                         <thead>
-                            <tr style="background: var(--brown-50);">
-                                <th>{{ __('admin.date') }}</th>
-                                <th class="text-end">{{ __('admin.gross_revenue') }}</th>
-                                <th class="text-end">{{ __('admin.cogs') }}</th>
-                                <th class="text-end">{{ __('admin.operational_expenses') }}</th>
-                                <th class="text-end">{{ __('admin.stock_procurement') }}</th>
-                                <th class="text-end">{{ __('admin.net_profit') }}</th>
-                                <th class="text-end">{{ __('admin.profit_margin') }}</th>
+                            <tr class="bg-light">
+                                <th class="border-0 rounded-start">{{ __('admin.date') }}</th>
+                                <th class="text-end border-0">{{ __('admin.gross_revenue') }}</th>
+                                <th class="text-end border-0">Komisi Konsinyasi</th>
+                                <th class="text-end border-0">Beban COGS</th>
+                                <th class="text-end border-0">{{ __('admin.operational_expenses') }}</th>
+                                <th class="text-end border-0">{{ __('admin.net_profit') }}</th>
+                                <th class="text-end border-0 rounded-end">{{ __('admin.profit_margin') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -231,17 +210,17 @@
                                 <tr>
                                     <td class="fw-medium">{{ \Carbon\Carbon::parse($day['date'])->format('d M Y') }}</td>
                                     <td class="text-end">Rp {{ number_format($day['revenue'], 0, ',', '.') }}</td>
+                                    <td class="text-end text-success fw-semibold">
+                                        Rp {{ number_format($day['consignment_commission'], 0, ',', '.') }}
+                                    </td>
                                     <td class="text-end text-muted">Rp {{ number_format($day['cogs'], 0, ',', '.') }}</td>
                                     <td class="text-end text-muted">Rp {{ number_format($day['expenses'], 0, ',', '.') }}</td>
-                                    <td class="text-end text-muted">Rp {{ number_format($day['procurement'], 0, ',', '.') }}
-                                    </td>
                                     <td class="text-end fw-bold {{ $day['profit'] >= 0 ? 'text-success' : 'text-danger' }}">
                                         Rp {{ number_format($day['profit'], 0, ',', '.') }}
                                     </td>
                                     <td class="text-end">
                                         @php $margin = $day['revenue'] > 0 ? ($day['profit'] / $day['revenue']) * 100 : 0; @endphp
-                                        <span
-                                            class="badge {{ $margin > 15 ? 'bg-success' : ($margin > 5 ? 'bg-warning' : 'bg-danger') }}">
+                                        <span class="badge {{ $margin > 15 ? 'bg-success' : ($margin > 5 ? 'bg-warning' : 'bg-danger') }}">
                                             {{ number_format($margin, 1) }}%
                                         </span>
                                     </td>

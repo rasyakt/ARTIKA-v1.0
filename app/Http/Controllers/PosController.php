@@ -31,6 +31,11 @@ class PosController extends Controller
         // Load only initial subset of products to speed up first load
         $products = \App\Models\Product::with('stocks')->limit(50)->get();
 
+        // Load favorite products for quick buttons
+        $favoriteProducts = \App\Models\Product::with('stocks')
+            ->where('is_favorite', true)
+            ->get();
+
         $categories = Category::all();
         $paymentMethods = PaymentMethod::where('is_active', true)->ordered()->get();
         $heldTransactions = HeldTransaction::where('user_id', Auth::id())
@@ -39,7 +44,7 @@ class PosController extends Controller
 
         $activePromos = \App\Models\Promo::active()->get();
 
-        return view('pos.index', compact('products', 'categories', 'paymentMethods', 'heldTransactions', 'activePromos'));
+        return view('pos.index', compact('products', 'categories', 'paymentMethods', 'heldTransactions', 'activePromos', 'favoriteProducts'));
     }
 
     public function search(Request $request)
