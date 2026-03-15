@@ -11,7 +11,20 @@ class CategoryController extends Controller
     public function index()
     {
         $categories = Category::withCount('products')->latest()->paginate(10);
-        return view('admin.categories.index', compact('categories'));
+
+        // Determine correct routes based on current user's role
+        $role = strtolower(auth()->user()->role->name ?? 'admin');
+        if ($role === 'warehouse') {
+            $storeRoute  = 'warehouse.categories.store';
+            $deleteRoute = 'warehouse.categories.delete';
+            $updateUrlBase = '/warehouse/categories/';
+        } else {
+            $storeRoute  = 'admin.categories.store';
+            $deleteRoute = 'admin.categories.delete';
+            $updateUrlBase = '/admin/categories/';
+        }
+
+        return view('admin.categories.index', compact('categories', 'storeRoute', 'deleteRoute', 'updateUrlBase'));
     }
 
     public function store(Request $request)
@@ -25,7 +38,7 @@ class CategoryController extends Controller
             'slug' => Str::slug($request->name),
         ]);
 
-        return redirect()->route('admin.categories')->with('success', 'Category created successfully!');
+        return redirect()->back()->with('success', 'Category created successfully!');
     }
 
     public function update(Request $request, $id)
@@ -41,7 +54,7 @@ class CategoryController extends Controller
             'slug' => Str::slug($request->name),
         ]);
 
-        return redirect()->route('admin.categories')->with('success', 'Category updated successfully!');
+        return redirect()->back()->with('success', 'Category updated successfully!');
     }
 
     public function destroy($id)
@@ -54,6 +67,6 @@ class CategoryController extends Controller
 
         $category->delete();
 
-        return redirect()->route('admin.categories')->with('success', 'Category deleted successfully!');
+        return redirect()->back()->with('success', 'Category deleted successfully!');
     }
 }

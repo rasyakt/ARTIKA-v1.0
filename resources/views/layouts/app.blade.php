@@ -1397,6 +1397,60 @@
                             class="sidebar-link {{ request()->routeIs('warehouse.stock-movements') ? 'active' : '' }}">
                             <i class="fa-solid fa-arrows-rotate"></i> {{ __('menu.stock_movements') }}
                         </a>
+
+                        {{-- Konsinyasi --}}
+                        <div class="sidebar-dropdown {{ request()->routeIs('warehouse.consignment.*') ? 'active' : '' }}">
+                            <div class="sidebar-link sidebar-dropdown-toggle">
+                                <i class="fa-solid fa-handshake"></i> Konsinyasi (Titip Jual)
+                                <i class="fa-solid fa-chevron-right dropdown-arrow"></i>
+                            </div>
+                            <ul class="sidebar-submenu">
+                                <li>
+                                    <a href="{{ route('warehouse.consignment.items.index') }}"
+                                        class="submenu-link {{ request()->routeIs('warehouse.consignment.items*') ? 'active' : '' }}">
+                                        <i class="fa-solid fa-boxes-stacked"></i> Barang Konsinyasi
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        {{-- Pre-Order Supplier --}}
+                        <div class="sidebar-dropdown {{ request()->routeIs('warehouse.pre-orders*') ? 'active' : '' }}">
+                            <div class="sidebar-link sidebar-dropdown-toggle">
+                                <i class="fa-solid fa-receipt"></i> Pre-Order Supplier
+                                <i class="fa-solid fa-chevron-right dropdown-arrow"></i>
+                            </div>
+                            <ul class="sidebar-submenu">
+                                <li>
+                                    <a href="{{ route('warehouse.pre-orders.index') }}"
+                                        class="submenu-link {{ request()->routeIs('warehouse.pre-orders*') ? 'active' : '' }}">
+                                        <i class="fa-solid fa-list"></i> Daftar Pre-Order
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        {{-- Pengaturan Gudang --}}
+                        <div class="sidebar-dropdown {{ request()->routeIs('warehouse.categories*') || request()->routeIs('warehouse.units*') ? 'active' : '' }}">
+                            <div class="sidebar-link sidebar-dropdown-toggle">
+                                <i class="fa-solid fa-tags"></i> Pengaturan Gudang
+                                <i class="fa-solid fa-chevron-right dropdown-arrow"></i>
+                            </div>
+                            <ul class="sidebar-submenu">
+                                <li>
+                                    <a href="{{ route('warehouse.categories.index') }}"
+                                        class="submenu-link {{ request()->routeIs('warehouse.categories*') ? 'active' : '' }}">
+                                        <i class="fa-solid fa-layer-group"></i> Kategori Produk
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ route('warehouse.units.index') }}"
+                                        class="submenu-link {{ request()->routeIs('warehouse.units*') ? 'active' : '' }}">
+                                        <i class="fa-solid fa-ruler"></i> Satuan
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     @endif
 
                     <div class="mt-auto px-1 py-3">

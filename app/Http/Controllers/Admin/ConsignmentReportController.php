@@ -9,6 +9,7 @@ use App\Models\ConsignmentSettlement;
 use App\Models\TransactionItem;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ConsignmentReportController extends Controller
 {
@@ -111,6 +112,27 @@ class ConsignmentReportController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    public function downloadPdf(Request $request)
+    {
+        $period    = $request->input('period', 'month');
+        $startDate = $request->input('start_date');
+        $endDate   = $request->input('end_date');
+
+        [$startDate, $endDate] = $this->resolveDates($period, $startDate, $endDate);
+
+        $filterConsignorId = $request->input('consignor_id');
+        $summary           = $this->getSummary($startDate, $endDate, $filterConsignorId);
+        $consignorStats    = $this->getConsignorStats($startDate, $endDate, $filterConsignorId);
+        $topProducts       = $this->getTopProducts($startDate, $endDate, $filterConsignorId);
+
+        $pdf = Pdf::loadView('admin.reports.consignment_pdf', compact(
+            'startDate', 'endDate', 'period', 'summary', 'consignorStats', 'topProducts'
+        ));
+        
+        return $pdf->setPaper('a4', 'portrait')
+                  ->stream("Laporan-Konsinyasi-{$startDate->format('Ymd')}-{$endDate->format('Ymd')}.pdf");
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────

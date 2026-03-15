@@ -11,10 +11,16 @@
             </h2>
             <p class="text-muted mb-0">Ringkasan penjualan dan pembayaran barang titip jual per penitip.</p>
         </div>
-        <a href="{{ route('admin.consignment.reports.export', request()->query()) }}"
-            class="btn btn-outline-success shadow-sm" style="border-radius: 12px; font-weight: 600;">
-            <i class="fa-solid fa-download me-1"></i> Export CSV
-        </a>
+        <div class="d-flex gap-2">
+            <a href="{{ route('admin.consignment.reports.export', request()->query()) }}"
+                class="btn btn-outline-success shadow-sm" style="border-radius: 12px; font-weight: 600;">
+                <i class="fa-solid fa-file-csv me-1"></i> Export CSV
+            </a>
+            <a href="{{ route('admin.consignment.reports.pdf', request()->query()) }}" target="_blank"
+                class="btn btn-outline-danger shadow-sm" style="border-radius: 12px; font-weight: 600;">
+                <i class="fa-solid fa-file-pdf me-1"></i> Download PDF
+            </a>
+        </div>
     </div>
 
     {{-- Filter --}}

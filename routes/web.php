@@ -160,6 +160,7 @@ Route::middleware(['auth'])->group(function () {
                     // Laporan Konsinyasi
                     Route::get('/reports', [\App\Http\Controllers\Admin\ConsignmentReportController::class, 'index'])->name('reports.index');
                     Route::get('/reports/export', [\App\Http\Controllers\Admin\ConsignmentReportController::class, 'export'])->name('reports.export');
+                    Route::get('/reports/pdf', [\App\Http\Controllers\Admin\ConsignmentReportController::class, 'downloadPdf'])->name('reports.pdf');
                 });
 
                 // Return Management
@@ -263,6 +264,29 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/stock-movements', [\App\Http\Controllers\WarehouseController::class , 'stockMovements'])->name('stock-movements');
             Route::post('/stock/adjust', [\App\Http\Controllers\WarehouseController::class , 'adjustStock'])->name('stock.adjust');
             Route::delete('/stock/{id}', [\App\Http\Controllers\WarehouseController::class , 'destroyStock'])->name('stock.destroy');
+
+            // Konsinyasi (Gudang)
+            Route::prefix('consignment')->name('consignment.')->group(function () {
+                Route::get('/items', [\App\Http\Controllers\WarehouseConsignmentController::class, 'index'])->name('items.index');
+                Route::post('/items', [\App\Http\Controllers\WarehouseConsignmentController::class, 'store'])->name('items.store');
+            });
+
+            // Pre-Order Supplier (Gudang — baca + konfirmasi penerimaan)
+            Route::prefix('pre-orders')->name('pre-orders.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\WarehousePreOrderController::class, 'index'])->name('index');
+                Route::get('/{id}', [\App\Http\Controllers\WarehousePreOrderController::class, 'show'])->name('show');
+            });
+
+            // Kategori & Satuan (Gudang)
+            Route::get('/categories', [\App\Http\Controllers\CategoryController::class, 'index'])->name('categories.index');
+            Route::post('/categories', [\App\Http\Controllers\CategoryController::class, 'store'])->name('categories.store');
+            Route::put('/categories/{id}', [\App\Http\Controllers\CategoryController::class, 'update'])->name('categories.update');
+            Route::delete('/categories/{id}', [\App\Http\Controllers\CategoryController::class, 'destroy'])->name('categories.delete');
+
+            Route::get('/units', [\App\Http\Controllers\UnitController::class, 'index'])->name('units.index');
+            Route::post('/units', [\App\Http\Controllers\UnitController::class, 'store'])->name('units.store');
+            Route::put('/units/{unit}', [\App\Http\Controllers\UnitController::class, 'update'])->name('units.update');
+            Route::delete('/units/{unit}', [\App\Http\Controllers\UnitController::class, 'destroy'])->name('units.destroy');
         }
         );
     });
