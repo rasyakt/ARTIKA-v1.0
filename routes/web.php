@@ -220,6 +220,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/search', [\App\Http\Controllers\PosController::class , 'search'])->name('search');
             Route::get('/', [\App\Http\Controllers\PosController::class , 'index'])->name('index');
             Route::get('/scanner', [\App\Http\Controllers\PosController::class , 'scanner'])->name('scanner');
+            Route::get('/barcode-lookup', [\App\Http\Controllers\PosController::class , 'lookupBarcode'])->name('barcode.lookup');
             Route::post('/checkout', [\App\Http\Controllers\PosController::class , 'store'])->name('checkout');
             Route::post('/hold', [\App\Http\Controllers\PosController::class , 'holdTransaction'])->name('hold');
             Route::get('/held', [\App\Http\Controllers\PosController::class , 'getHeldTransactions'])->name('held.index');

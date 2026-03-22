@@ -31,9 +31,10 @@ class PosController extends Controller
         // Load only initial subset of products to speed up first load
         $products = \App\Models\Product::with('stocks')->limit(50)->get();
 
-        // Load favorite products for quick buttons
+        // Load favorite products for quick buttons — capped at 50 to prevent memory exhaustion
         $favoriteProducts = \App\Models\Product::with('stocks')
             ->where('is_favorite', true)
+            ->limit(50)
             ->get();
 
         $categories = Category::all();
@@ -49,19 +50,29 @@ class PosController extends Controller
 
     public function search(Request $request)
     {
+        $searchTerm = trim($request->input('q', ''));
+        $categoryId = $request->input('category_id', 'all');
+
         $query = \App\Models\Product::with('stocks');
 
-        if ($request->has('q') && $request->q != '') {
-            $searchTerm = $request->q;
-            $query->where('name', 'like', '%' . $searchTerm . '%')
-                ->orWhere('barcode', 'like', '%' . $searchTerm . '%');
+        if ($searchTerm !== '') {
+            // If input looks like a barcode (digits only), do exact match first (uses unique index)
+            if (ctype_digit($searchTerm)) {
+                $query->where(function ($q) use ($searchTerm) {
+                    $q->where('barcode', $searchTerm)
+                      ->orWhereRaw('MATCH(name, barcode) AGAINST(? IN BOOLEAN MODE)', [$searchTerm . '*']);
+                });
+            } else {
+                // Use FULLTEXT search: avoids full table scan, uses idx_products_fulltext index
+                $query->whereRaw('MATCH(name, barcode) AGAINST(? IN BOOLEAN MODE)', [$searchTerm . '*']);
+            }
         }
 
-        if ($request->has('category_id') && $request->category_id != 'all') {
-            $query->where('category_id', $request->category_id);
+        if ($categoryId !== 'all' && $categoryId !== null) {
+            $query->where('category_id', $categoryId);
         }
 
-        // Return up to 50 results at a time
+        // Hard cap: max 50 results per search request
         $products = $query->limit(50)->get();
 
         return response()->json([
@@ -93,39 +104,49 @@ class PosController extends Controller
 
     public function history(Request $request)
     {
-        $query = Transaction::where('user_id', Auth::id())
-            ->with('items.product');
+        $userId = Auth::id();
 
-        // Date Filter
-        if ($request->filled('start_date')) {
-            $query->whereDate('created_at', '>=', $request->start_date);
-        }
-        if ($request->filled('end_date')) {
-            $query->whereDate('created_at', '<=', $request->end_date);
-        }
+        // Default to today if no date filters provided — prevents full table SUM over millions of rows
+        $startDate = $request->filled('start_date') ? $request->start_date : today()->toDateString();
+        $endDate   = $request->filled('end_date')   ? $request->end_date   : today()->toDateString();
+
+        $query = Transaction::where('user_id', $userId)
+            ->whereDate('created_at', '>=', $startDate)
+            ->whereDate('created_at', '<=', $endDate)
+            ->with('items.product');
 
         // Get Summary Stats (before pagination)
         $summaryQuery = clone $query;
         $totalRevenue = $summaryQuery->sum('total_amount') ?? 0;
 
-        // Get Sold Items Summary (Cached for performance)
-        $cacheKey = 'sold_items_' . Auth::id() . '_' . $request->start_date . '_' . $request->end_date;
-        $soldItems = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(10), function () use ($summaryQuery) {
-            return TransactionItem::whereIn('transaction_id', $summaryQuery->select('id'))
+        // Get Sold Items Summary — uses direct JOIN instead of slow whereIn(subquery)
+        // Cached per user per date range for 10 minutes
+        $cacheKey = 'sold_items_' . $userId . '_' . $startDate . '_' . $endDate;
+        $soldItems = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(10), function () use ($userId, $startDate, $endDate) {
+            return TransactionItem::join('transactions', 'transaction_items.transaction_id', '=', 'transactions.id')
                 ->join('products', 'transaction_items.product_id', '=', 'products.id')
-                ->select('products.name', DB::raw('SUM(transaction_items.quantity) as total_qty'), DB::raw('SUM(transaction_items.subtotal) as total_sales'))
-                ->groupBy('products.name')
+                ->where('transactions.user_id', $userId)
+                ->whereDate('transactions.created_at', '>=', $startDate)
+                ->whereDate('transactions.created_at', '<=', $endDate)
+                ->select(
+                    'products.name',
+                    DB::raw('SUM(transaction_items.quantity) as total_qty'),
+                    DB::raw('SUM(transaction_items.subtotal) as total_sales')
+                )
+                ->groupBy('products.id', 'products.name')
                 ->orderByDesc('total_qty')
+                ->limit(50)   // cap top 50 sold items — prevents unbounded result set
                 ->get();
         });
 
+        // Use simplePaginate: avoids expensive COUNT(*) on large datasets
         $transactions = $query->orderBy('created_at', 'desc')
-            ->paginate(10)
+            ->simplePaginate(10)
             ->withQueryString();
 
         $enableReturns = \App\Models\Setting::get('cashier_enable_returns', true);
 
-        return view('pos.history', compact('transactions', 'totalRevenue', 'soldItems', 'enableReturns'));
+        return view('pos.history', compact('transactions', 'totalRevenue', 'soldItems', 'enableReturns', 'startDate', 'endDate'));
     }
 
     public function showReceipt($id)
@@ -141,8 +162,32 @@ class PosController extends Controller
 
     public function scanner()
     {
-        $products = $this->productRepository->getAllProducts();
-        return view('pos.scanner', compact('products'));
+        // Do NOT pre-load all products — lookup happens via barcode AJAX on scan event
+        return view('pos.scanner');
+    }
+
+    /**
+     * Barcode lookup for scanner — returns a single product by exact barcode match.
+     * Called via AJAX from the scanner page on each scan event.
+     */
+    public function lookupBarcode(Request $request)
+    {
+        $barcode = trim($request->input('barcode', ''));
+
+        if (empty($barcode)) {
+            return response()->json(['success' => false, 'message' => 'Barcode tidak boleh kosong'], 422);
+        }
+
+        // Exact match on indexed unique barcode column — O(1) lookup regardless of table size
+        $product = \App\Models\Product::with('stocks')
+            ->where('barcode', $barcode)
+            ->first();
+
+        if (!$product) {
+            return response()->json(['success' => false, 'message' => 'Produk tidak ditemukan'], 404);
+        }
+
+        return response()->json(['success' => true, 'data' => $product]);
     }
 
     public function store(Request $request)
