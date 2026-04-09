@@ -132,6 +132,37 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('/audit/export', [\App\Http\Controllers\AuditController::class , 'export'])->name('audit.export');
                 Route::post('/audit/clear', [\App\Http\Controllers\AuditController::class , 'clear'])->name('audit.clear');
 
+                // Konsinyasi (Titip Jual)
+                Route::prefix('consignors')->name('consignors.')->group(function () {
+                    Route::get('/', [\App\Http\Controllers\ConsignorController::class, 'index'])->name('index');
+                    Route::post('/', [\App\Http\Controllers\ConsignorController::class, 'store'])->name('store');
+                    Route::get('/{consignor}', [\App\Http\Controllers\ConsignorController::class, 'show'])->name('show');
+                    Route::put('/{id}', [\App\Http\Controllers\ConsignorController::class, 'update'])->name('update');
+                    Route::delete('/{id}', [\App\Http\Controllers\ConsignorController::class, 'destroy'])->name('delete');
+                });
+
+                Route::prefix('consignment')->name('consignment.')->group(function () {
+                    // Barang Konsinyasi
+                    Route::get('/items', [\App\Http\Controllers\ConsignmentItemController::class, 'index'])->name('items.index');
+                    Route::post('/items', [\App\Http\Controllers\ConsignmentItemController::class, 'store'])->name('items.store');
+                    Route::put('/items/{id}', [\App\Http\Controllers\ConsignmentItemController::class, 'update'])->name('items.update');
+                    Route::post('/items/{id}/return', [\App\Http\Controllers\ConsignmentItemController::class, 'returnToConsignor'])->name('items.return');
+                    Route::delete('/items/{id}', [\App\Http\Controllers\ConsignmentItemController::class, 'destroy'])->name('items.delete');
+
+                    // Settlement
+                    Route::get('/settlements', [\App\Http\Controllers\ConsignmentSettlementController::class, 'index'])->name('settlements.index');
+                    Route::get('/settlements/create', [\App\Http\Controllers\ConsignmentSettlementController::class, 'create'])->name('settlements.create');
+                    Route::post('/settlements', [\App\Http\Controllers\ConsignmentSettlementController::class, 'store'])->name('settlements.store');
+                    Route::get('/settlements/{settlement}', [\App\Http\Controllers\ConsignmentSettlementController::class, 'show'])->name('settlements.show');
+                    Route::get('/settlements/{settlement}/pdf', [\App\Http\Controllers\ConsignmentSettlementController::class, 'printPdf'])->name('settlements.pdf');
+                    Route::post('/settlements/{settlement}/pay', [\App\Http\Controllers\ConsignmentSettlementController::class, 'markAsPaid'])->name('settlements.pay');
+
+                    // Laporan Konsinyasi
+                    Route::get('/reports', [\App\Http\Controllers\Admin\ConsignmentReportController::class, 'index'])->name('reports.index');
+                    Route::get('/reports/export', [\App\Http\Controllers\Admin\ConsignmentReportController::class, 'export'])->name('reports.export');
+                    Route::get('/reports/pdf', [\App\Http\Controllers\Admin\ConsignmentReportController::class, 'downloadPdf'])->name('reports.pdf');
+                });
+
                 // Return Management
                 Route::get('/returns', [\App\Http\Controllers\Admin\ReturnController::class , 'index'])->name('returns.index');
                 Route::post('/returns', [\App\Http\Controllers\Admin\ReturnController::class , 'store'])->name('returns.store');
@@ -189,6 +220,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/search', [\App\Http\Controllers\PosController::class , 'search'])->name('search');
             Route::get('/', [\App\Http\Controllers\PosController::class , 'index'])->name('index');
             Route::get('/scanner', [\App\Http\Controllers\PosController::class , 'scanner'])->name('scanner');
+            Route::get('/barcode-lookup', [\App\Http\Controllers\PosController::class , 'lookupBarcode'])->name('barcode.lookup');
             Route::post('/checkout', [\App\Http\Controllers\PosController::class , 'store'])->name('checkout');
             Route::post('/hold', [\App\Http\Controllers\PosController::class , 'holdTransaction'])->name('hold');
             Route::get('/held', [\App\Http\Controllers\PosController::class , 'getHeldTransactions'])->name('held.index');
@@ -233,6 +265,29 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/stock-movements', [\App\Http\Controllers\WarehouseController::class , 'stockMovements'])->name('stock-movements');
             Route::post('/stock/adjust', [\App\Http\Controllers\WarehouseController::class , 'adjustStock'])->name('stock.adjust');
             Route::delete('/stock/{id}', [\App\Http\Controllers\WarehouseController::class , 'destroyStock'])->name('stock.destroy');
+
+            // Konsinyasi (Gudang)
+            Route::prefix('consignment')->name('consignment.')->group(function () {
+                Route::get('/items', [\App\Http\Controllers\WarehouseConsignmentController::class, 'index'])->name('items.index');
+                Route::post('/items', [\App\Http\Controllers\WarehouseConsignmentController::class, 'store'])->name('items.store');
+            });
+
+            // Pre-Order Supplier (Gudang — baca + konfirmasi penerimaan)
+            Route::prefix('pre-orders')->name('pre-orders.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\WarehousePreOrderController::class, 'index'])->name('index');
+                Route::get('/{id}', [\App\Http\Controllers\WarehousePreOrderController::class, 'show'])->name('show');
+            });
+
+            // Kategori & Satuan (Gudang)
+            Route::get('/categories', [\App\Http\Controllers\CategoryController::class, 'index'])->name('categories.index');
+            Route::post('/categories', [\App\Http\Controllers\CategoryController::class, 'store'])->name('categories.store');
+            Route::put('/categories/{id}', [\App\Http\Controllers\CategoryController::class, 'update'])->name('categories.update');
+            Route::delete('/categories/{id}', [\App\Http\Controllers\CategoryController::class, 'destroy'])->name('categories.delete');
+
+            Route::get('/units', [\App\Http\Controllers\UnitController::class, 'index'])->name('units.index');
+            Route::post('/units', [\App\Http\Controllers\UnitController::class, 'store'])->name('units.store');
+            Route::put('/units/{unit}', [\App\Http\Controllers\UnitController::class, 'update'])->name('units.update');
+            Route::delete('/units/{unit}', [\App\Http\Controllers\UnitController::class, 'destroy'])->name('units.destroy');
         }
         );
     });

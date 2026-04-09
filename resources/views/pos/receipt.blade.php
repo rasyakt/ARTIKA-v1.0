@@ -421,8 +421,8 @@
             <div class="logo-container">
                 <img src="{{ asset(App\Models\Setting::get('site_logo', 'img/logo2.png')) }}" alt="Logo" class="logo">
             </div>
-            <div class="store-name">ARTIKA MINIMARKET</div>
-            <div class="store-info">{{ App\Models\Setting::get('address', '') }}</div>
+            <div class="store-name">{{ \App\Models\Setting::get('store_name', 'ARTIKA POS') }}</div>
+            <div class="store-info">{{ \App\Models\Setting::get('store_address', '') }}</div>
         </div>
 
         <!-- Transaction Info -->

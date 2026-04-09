@@ -171,15 +171,15 @@
                                         @if($stock->expired_at)
                                             <div class="d-flex flex-column">
                                                 <span
-                                                    class="fw-semibold {{ $stock->expired_at->isPast() ? 'text-danger' : ($stock->expired_at->diffInDays(now()->startOfDay()) < 30 ? 'text-warning' : '') }}">
+                                                    class="fw-semibold {{ $stock->expired_at->isPast() ? 'text-danger' : (now()->startOfDay()->diffInDays($stock->expired_at->startOfDay()) < 30 ? 'text-warning' : '') }}">
                                                     {{ $stock->expired_at->format('d M Y') }}
                                                 </span>
                                                 @if($stock->expired_at->isPast())
                                                     <small class="text-danger fw-bold"
                                                         style="font-size: 0.7rem;">{{ __('warehouse.expired') }}</small>
-                                                @elseif($stock->expired_at->diffInDays(now()->startOfDay()) < 30)
+                                                @elseif(($daysLeft = (int) now()->startOfDay()->diffInDays($stock->expired_at->startOfDay())) < 30)
                                                     <small class="text-warning fw-bold"
-                                                        style="font-size: 0.7rem;">{{ (int) $stock->expired_at->diffInDays(now()->startOfDay()) }}
+                                                        style="font-size: 0.7rem;">{{ $daysLeft }}
                                                         {{ __('warehouse.days_left') }}</small>
                                                 @endif
                                             </div>

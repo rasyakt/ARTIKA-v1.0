@@ -39,8 +39,7 @@
                             <!-- Barcode -->
                             <div class="mb-4">
                                 <label for="barcode" class="form-label fw-semibold"
-                                    style="color: var(--color-primary-dark);">{{ __('common.barcode') }}
-                                    *</label>
+                                    style="color: var(--color-primary-dark);">{{ __('common.barcode') }} ({{ __('common.optional') }})</label>
                                 <div class="input-group" style="border-radius: 12px;">
                                     <span class="input-group-text bg-white text-muted"
                                         style="border-radius: 12px 0 0 12px !important; border: 2px solid var(--color-secondary-light) !important; border-right: none !important; padding: 0.75rem 1rem;">
@@ -48,7 +47,7 @@
                                     </span>
                                     <input type="text" class="form-control @error('barcode') is-invalid @enderror"
                                         id="barcode" name="barcode" value="{{ old('barcode', $product->barcode) }}"
-                                        placeholder="{{ __('common.barcode_placeholder') }}" required
+                                        placeholder="{{ __('common.barcode_placeholder') }}"
                                         style="border: 2px solid var(--color-secondary-light) !important; border-left: none !important; border-radius: {{ App\Models\Setting::get('admin_enable_camera', true) && App\Models\Setting::get('enable_camera', true) ? '0 !important' : '0 12px 12px 0 !important' }}; {{ App\Models\Setting::get('admin_enable_camera', true) && App\Models\Setting::get('enable_camera', true) ? 'border-right: none !important;' : '' }} padding: 0.75rem 1rem; box-shadow: none; font-weight: 500; font-size: 1rem;">
                                     @if(App\Models\Setting::get('admin_enable_camera', true) && App\Models\Setting::get('enable_camera', true))
                                         <button class="btn d-flex align-items-center justify-content-center" type="button"
@@ -162,6 +161,22 @@
                                     </div>
                                 </div>
                             @endif
+
+                            <!-- Favorite Product Toggle -->
+                            <div class="mb-4 p-3"
+                                style="background: linear-gradient(135deg, #fff8e1 0%, #fff3e0 100%); border-radius: 12px; border: 2px solid #ffe0b2;">
+                                <div class="form-check form-switch d-flex align-items-center gap-3">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="is_favorite"
+                                        name="is_favorite" value="1" {{ old('is_favorite', $product->is_favorite) ? 'checked' : '' }}
+                                        style="width: 3rem; height: 1.5rem; cursor: pointer;">
+                                    <label class="form-check-label fw-semibold" for="is_favorite"
+                                        style="color: var(--color-primary-dark); cursor: pointer;">
+                                        <i class="fa-solid fa-star me-1" style="color: #f59e0b;"></i>
+                                        Produk Favorit (Tombol Cepat di Kasir)
+                                    </label>
+                                </div>
+                                <small class="text-muted mt-1 d-block ms-5 ps-2">Produk ini akan muncul sebagai tombol cepat di halaman kasir untuk akses instan.</small>
+                            </div>
 
                             <!-- Action Buttons -->
                             <div class="d-flex gap-3 justify-content-end pt-3 border-top">

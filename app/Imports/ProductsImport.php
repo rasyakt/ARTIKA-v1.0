@@ -35,8 +35,9 @@ class ProductsImport implements ToCollection, WithHeadingRow, WithValidation, Sk
     public function collection(Collection $rows)
     {
         foreach ($rows as $row) {
-            // Robust check: Skip rows where barcode or name is empty (Instruction rows or empty rows)
-            if (empty($row['barcode']) || empty($row['nama_produk'])) {
+            // Robust check: Skip rows where name is empty (Instruction rows or empty rows)
+            // Barcode is now optional
+            if (empty($row['nama_produk'])) {
                 continue;
             }
 
@@ -58,9 +59,16 @@ class ProductsImport implements ToCollection, WithHeadingRow, WithValidation, Sk
                 }
             }
 
+            $barcode = trim($row['barcode'] ?? '');
+            if (empty($barcode)) {
+                // Generate temporary unique barcode based on name and timestamp if completely missing
+                // In a real scenario, we might want a more predictable SKU generator
+                $barcode = 'ART-IMP-' . strtoupper(substr(md5($row['nama_produk'] . time()), 0, 8));
+            }
+
             // Update or Create based on Barcode
             Product::updateOrCreate(
-                ['barcode' => $row['barcode']],
+                ['barcode' => $barcode],
                 [
                     'name' => $row['nama_produk'],
                     'category_id' => $categoryId,

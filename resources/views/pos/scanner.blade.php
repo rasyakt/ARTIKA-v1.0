@@ -589,7 +589,10 @@
 
 <body>
     <script>
-        const products = @json($products);
+        // Barcode lookup via AJAX — NO product data pre-loaded from server.
+        // Each scan triggers one lightweight request, safe with millions of products.
+        const BARCODE_LOOKUP_URL = '{{ route('pos.barcode.lookup') }}';
+        const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     </script>
 
     <!-- Success Flash -->
@@ -770,18 +773,39 @@
             // Silent - normal behavior during scanning
         }
 
-        // Process scanned barcode
-        function processBarcode(barcode) {
-            const product = products.find(p => p.barcode === barcode);
+        // Process scanned barcode — AJAX lookup, O(1) on server regardless of catalog size
+        let isLookingUp = false; // Prevent concurrent AJAX calls from rapid scans
 
-            if (product) {
-                addScannedItem(product);
-                showProductToast(product);
-                triggerSuccessEffects();
-            } else {
+        function processBarcode(barcode) {
+            if (isLookingUp) return;
+            isLookingUp = true;
+
+            fetch(`${BARCODE_LOOKUP_URL}?barcode=${encodeURIComponent(barcode)}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.data) {
+                    addScannedItem(data.data);
+                    showProductToast(data.data);
+                    triggerSuccessEffects();
+                } else {
+                    showErrorToast();
+                    triggerErrorEffects();
+                }
+            })
+            .catch(err => {
+                console.error('Barcode lookup failed:', err);
                 showErrorToast();
                 triggerErrorEffects();
-            }
+            })
+            .finally(() => {
+                isLookingUp = false;
+            });
         }
 
         // Add item to scanned list

@@ -108,7 +108,7 @@
         }
 
         html {
-            zoom: 90%;
+            zoom: 100%;
             background: var(--color-bg);
         }
 
@@ -645,6 +645,143 @@
                 width: 300px;
                 height: 300px;
             }
+        }
+
+        /* QUICK BUTTONS (Favorites) */
+        .quick-buttons-section {
+            padding: 0.75rem 1rem 0;
+        }
+        .quick-buttons-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--color-primary-dark);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .quick-buttons-grid {
+            display: flex;
+            gap: 0.6rem;
+            overflow-x: auto;
+            padding-bottom: 0.75rem;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+        }
+        .quick-buttons-grid::-webkit-scrollbar {
+            height: 4px;
+        }
+        .quick-buttons-grid::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .quick-buttons-grid::-webkit-scrollbar-thumb {
+            background: var(--color-secondary-light);
+            border-radius: 10px;
+        }
+        .quick-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-width: 100px;
+            max-width: 120px;
+            padding: 0.6rem 0.5rem;
+            border: 2px solid #ffe0b2;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #fffde7 0%, #fff8e1 100%);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            scroll-snap-align: start;
+            flex-shrink: 0;
+            gap: 0.3rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .quick-btn:hover {
+            border-color: #f59e0b;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+        }
+        .quick-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 4px rgba(245, 158, 11, 0.15);
+        }
+        .quick-btn-disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .quick-btn-img {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+        .quick-btn-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+            font-size: 1.1rem;
+        }
+        .quick-btn-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.1rem;
+            width: 100%;
+        }
+        .quick-btn-name {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--color-primary-dark);
+            text-align: center;
+            line-height: 1.2;
+            max-height: 2.4em;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+        .quick-btn-price {
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: #d97706;
+        }
+        .quick-btn-badge-oos {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            font-size: 0.55rem;
+            background: var(--color-danger);
+            color: white;
+            padding: 1px 5px;
+            border-radius: 6px;
+            font-weight: 700;
+        }
+
+        [data-bs-theme="dark"] .quick-btn {
+            background: linear-gradient(135deg, #3b2e1a 0%, #2c2316 100%);
+            border-color: #5a4a32;
+        }
+        [data-bs-theme="dark"] .quick-btn:hover {
+            border-color: #f59e0b;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+        }
+        [data-bs-theme="dark"] .quick-btn-name {
+            color: #f5f5f5;
+        }
+        [data-bs-theme="dark"] .quick-btn-icon {
+            background: rgba(245, 158, 11, 0.2);
+        }
+        [data-bs-theme="dark"] .quick-buttons-header {
+            color: #f5f5f5;
         }
 
         /* PRODUCTS */
@@ -2118,6 +2255,61 @@
                     @endforeach
                 </div>
 
+                <!-- QUICK BUTTONS (Favorite Products) -->
+                @if($favoriteProducts->count() > 0)
+                <div class="quick-buttons-section" id="quickButtonsSection">
+                    <div class="quick-buttons-header">
+                        <i class="fa-solid fa-star" style="color: #f59e0b;"></i>
+                        <span>Produk Favorit</span>
+                    </div>
+                    <div class="quick-buttons-grid">
+                        @foreach($favoriteProducts as $favProduct)
+                            @php
+                                $favStock = $favProduct->available_stock;
+                                $favOutOfStock = $favStock <= 0;
+                                $favPromo = $activePromos->where('product_id', $favProduct->id)->first()
+                                    ?? $activePromos->where('category_id', $favProduct->category_id)->first();
+                                $favPromoPrice = $favProduct->price;
+                                $favHasPromo = false;
+                                if ($favPromo) {
+                                    $favHasPromo = true;
+                                    if ($favPromo->type === 'percentage') {
+                                        $favPromoPrice = $favProduct->price * (1 - $favPromo->value / 100);
+                                    } else {
+                                        $favPromoPrice = max(0, $favProduct->price - $favPromo->value);
+                                    }
+                                }
+                            @endphp
+                            <button type="button"
+                                class="quick-btn {{ $favOutOfStock ? 'quick-btn-disabled' : '' }}"
+                                data-product-id="{{ $favProduct->id }}"
+                                data-name="{{ $favProduct->name }}"
+                                data-price="{{ $favProduct->price }}"
+                                data-promo-price="{{ $favPromoPrice }}"
+                                data-stock="{{ $favStock }}"
+                                data-barcode="{{ $favProduct->barcode }}"
+                                {{ $favOutOfStock ? 'disabled' : '' }}
+                                onclick="addToCartFromQuickBtn(this)">
+                                @if($favProduct->image && file_exists(public_path($favProduct->image)))
+                                    <img src="{{ asset($favProduct->image) }}" alt="{{ $favProduct->name }}" class="quick-btn-img">
+                                @else
+                                    <div class="quick-btn-icon">
+                                        <i class="fa-solid fa-box"></i>
+                                    </div>
+                                @endif
+                                <div class="quick-btn-info">
+                                    <span class="quick-btn-name">{{ $favProduct->name }}</span>
+                                    <span class="quick-btn-price">Rp{{ number_format($favHasPromo ? $favPromoPrice : $favProduct->price, 0, ',', '.') }}</span>
+                                </div>
+                                @if($favOutOfStock)
+                                    <span class="quick-btn-badge-oos">Habis</span>
+                                @endif
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
+
                 <!-- PRODUCTS GRID -->
                 <div class="products-grid-container">
                     <div class="products-grid" id="productsGrid">
@@ -2146,7 +2338,10 @@
                                 }
 
                                 $expiry = $product->next_expiry;
-                                $isExpiringSoon = $expiry && \Carbon\Carbon::parse($expiry)->diffInDays(now()->startOfDay()) < 30;
+                                $daysUntilExpiry = $expiry
+                                    ? (int) now()->startOfDay()->diffInDays(\Carbon\Carbon::parse($expiry)->startOfDay())
+                                    : 0;
+                                $isExpiringSoon = $expiry && $daysUntilExpiry > 0 && $daysUntilExpiry < 30;
                             @endphp
                             <div class="product-card {{ $isOutOfStock ? 'opacity-50' : '' }}"
                                 data-product-id="{{ $product->id }}" data-category="{{ $product->category_id }}"
@@ -2164,7 +2359,7 @@
                                 @if($isExpiringSoon)
                                     <div class="expiry-badge expiring bg-warning text-dark">
                                         <i class="fas fa-hourglass-half"></i>
-                                        {{ (int) \Carbon\Carbon::parse($expiry)->diffInDays(now()->startOfDay()) }}d
+                                        {{ $daysUntilExpiry }}d
                                     </div>
                                 @endif
 
@@ -3183,6 +3378,22 @@
                 console.error('Failed to initialize keypad:', e);
             }
         });
+
+        // Quick Button handler — creates a virtual product card and reuses addToCart()
+        function addToCartFromQuickBtn(btn) {
+            const virtualCard = {
+                dataset: {
+                    productId: btn.dataset.productId,
+                    name: btn.dataset.name,
+                    price: btn.dataset.price,
+                    promoPrice: btn.dataset.promoPrice,
+                    stock: btn.dataset.stock,
+                    barcode: btn.dataset.barcode,
+                    expiry: ''
+                }
+            };
+            addToCart(virtualCard);
+        }
 
         function addToCart(productCard) {
             console.log('[Cart] addToCart called for:', productCard.dataset.name);
