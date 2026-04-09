@@ -377,6 +377,17 @@ return [
     'invoice_rand_length' => 'Panjang Kode Acak',
     'invoice_seq_padding' => 'Digit Nomor Urut',
 
+    // Store Information Settings
+    'store_information' => 'Informasi Kontak Toko',
+    'store_name' => 'Nama Toko',
+    'store_phone' => 'No. HP / Telepon Toko',
+    'store_email' => 'Email Toko',
+    'store_address' => 'Alamat Toko',
+    'store_name_hint' => 'Masukkan nama resmi toko Anda.',
+    'store_phone_hint' => 'Masukkan nomor telepon resmi toko untuk ditampilkan di struk dan dokumen.',
+    'store_email_hint' => 'Masukkan alamat email resmi toko.',
+    'store_address_hint' => 'Masukkan alamat lengkap toko.',
+
     // Manager Role
     'manager_dashboard' => 'Dashboard Manager',
     'subtotal' => 'Subtotal',

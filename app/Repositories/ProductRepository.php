@@ -8,9 +8,11 @@ use App\Models\Stock;
 
 class ProductRepository implements ProductRepositoryInterface
 {
-    public function getAllProducts()
+    public function getAllProducts(int $limit = 200)
     {
-        return Product::with('stocks')->get();
+        // Safety cap: always limit to prevent memory exhaustion on large catalogs.
+        // Use PosController::search() for paginated/searched results instead.
+        return Product::with('stocks')->limit($limit)->get();
     }
 
     public function findProductByBarcode($barcode)

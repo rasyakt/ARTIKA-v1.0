@@ -213,7 +213,8 @@ class TransactionService
     public function deleteTransaction($transactionId)
     {
         return DB::transaction(function () use ($transactionId) {
-            $transaction = Transaction::findOrFail($transactionId);
+            // Eager load 'items' to avoid N+1 query inside the loop below
+            $transaction = Transaction::with('items')->findOrFail($transactionId);
 
             // 1. Restore Stock if not already rolled back
             if ($transaction->status !== 'rolled_back') {
@@ -398,9 +399,13 @@ class TransactionService
             $invoiceNo = str_replace('{RAND}', strtoupper(Str::random($randLen)), $invoiceNo);
         }
 
-        // Handle {SEQ} token — daily sequential counter
+        // Handle {SEQ} token — daily sequential counter with advisory lock to prevent race conditions
         if (str_contains($invoiceNo, '{SEQ}')) {
-            $todayCount = Transaction::whereDate('created_at', now()->toDateString())->count();
+            // Use DB lock to prevent two simultaneous checkouts getting the same SEQ number
+            $todayCount = DB::table('transactions')
+                ->whereDate('created_at', now()->toDateString())
+                ->lockForUpdate()
+                ->count();
             $seq = str_pad($todayCount + 1, $seqPad, '0', STR_PAD_LEFT);
             $invoiceNo = str_replace('{SEQ}', $seq, $invoiceNo);
         }

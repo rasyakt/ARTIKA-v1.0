@@ -196,16 +196,23 @@ class AdminController extends Controller
     public function storeProduct(Request $request)
     {
         $request->validate([
-            'barcode' => 'required|unique:products',
+            'barcode' => 'nullable|unique:products,barcode',
             'name' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
             'price' => 'required|numeric|min:0',
             'cost_price' => 'required|numeric|min:0',
-            'image' => 'nullable|mimes:png|max:2048',
+            'image' => 'nullable|mimes:png,jpg,jpeg|max:2048',
         ]);
 
         return DB::transaction(function () use ($request) {
             $data = $request->only(['barcode', 'name', 'category_id', 'price', 'cost_price', 'description']);
+            $data['is_favorite'] = $request->has('is_favorite') ? true : false;
+
+            // Auto-generate barcode if empty
+            if (empty($data['barcode'])) {
+                $lastId = Product::max('id') ?? 0;
+                $data['barcode'] = '20' . str_pad($lastId + 1, 8, '0', STR_PAD_LEFT);
+            }
 
             if ($request->hasFile('image')) {
                 $imageService = app(\App\Services\ImageService::class);
@@ -251,15 +258,21 @@ class AdminController extends Controller
         $product = Product::findOrFail($id);
 
         $request->validate([
-            'barcode' => 'required|unique:products,barcode,' . $id,
+            'barcode' => 'nullable|unique:products,barcode,' . $id,
             'name' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
             'price' => 'required|numeric|min:0',
             'cost_price' => 'required|numeric|min:0',
-            'image' => 'nullable|mimes:png|max:2048',
+            'image' => 'nullable|mimes:png,jpg,jpeg|max:2048',
         ]);
 
         $data = $request->only(['barcode', 'name', 'category_id', 'price', 'cost_price', 'description']);
+        $data['is_favorite'] = $request->has('is_favorite') ? true : false;
+
+        // Auto-generate barcode if empty
+        if (empty($data['barcode'])) {
+            $data['barcode'] = 'ART-' . str_pad($id, 6, '0', STR_PAD_LEFT);
+        }
 
         if ($request->hasFile('image')) {
             $imageService = app(\App\Services\ImageService::class);

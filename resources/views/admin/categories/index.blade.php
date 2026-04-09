@@ -79,7 +79,7 @@
                                                         <hr class="dropdown-divider my-1">
                                                     </li>
                                                     <li>
-                                                        <form action="{{ route('admin.categories.delete', $category->id) }}"
+                                                        <form action="{{ route($deleteRoute, $category->id) }}"
                                                             method="POST" class="delete-form">
                                                             @csrf
                                                             @method('DELETE')
@@ -127,7 +127,7 @@
                         {{ __('admin.add_category') }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form action="{{ route('admin.categories.store') }}" method="POST">
+                <form action="{{ route($storeRoute) }}" method="POST">
                     @csrf
                     <div class="modal-body p-4">
                         <div class="mb-3">
@@ -203,7 +203,7 @@
                     var modalForm = editCategoryModal.querySelector('#editCategoryForm');
                     var modalNameInput = editCategoryModal.querySelector('#edit_name');
 
-                    modalForm.action = '/admin/categories/' + id;
+                    modalForm.action = '{{ $updateUrlBase }}' + id;
                     modalNameInput.value = name;
                 });
             }

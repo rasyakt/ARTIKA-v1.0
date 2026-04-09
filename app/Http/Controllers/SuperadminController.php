@@ -211,8 +211,11 @@ class SuperadminController extends Controller
         // Define default settings categories
         $categories = [
             'General' => [
-                'system_name' => ['label' => 'System Name', 'type' => 'text', 'default' => 'ARTIKA POS'],
-                'address' => ['label' => 'Store Address', 'type' => 'text', 'default' => ''],
+                'system_name' => ['label' => 'Nama Aplikasi', 'type' => 'text', 'default' => 'ARTIKA POS'],
+                'store_name' => ['label' => 'Nama Toko (di Struk/PDF)', 'type' => 'text', 'default' => 'ARTIKA POS'],
+                'store_phone' => ['label' => 'No. Telepon Toko', 'type' => 'text', 'default' => ''],
+                'store_email' => ['label' => 'Email Toko', 'type' => 'text', 'default' => ''],
+                'store_address' => ['label' => 'Alamat Toko', 'type' => 'text', 'default' => ''],
                 'site_logo_login' => ['label' => 'Logo Halaman Login', 'type' => 'file', 'accept' => '.png,.jpg,.jpeg,.webp', 'default' => 'img/logo.png'],
                 'site_logo' => ['label' => 'Logo Aplikasi (Navbar & Lainnya)', 'type' => 'file', 'accept' => '.png,.jpg,.jpeg,.webp', 'default' => 'img/logo2.png'],
                 'login_background' => ['label' => 'Background Halaman Login', 'type' => 'file', 'accept' => '.png,.jpg,.jpeg,.webp', 'default' => ''],

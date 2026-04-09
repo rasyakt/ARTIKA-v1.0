@@ -56,7 +56,7 @@
 
 
                             <!-- Receipt Paper Size -->
-                            <div class="d-flex justify-content-between align-items-center mb-4 pb-4 border-bottom">
+                            <div class="d-flex justify-content-between align-items-center mb-0 pb-0">
                                 <div class="me-3">
                                     <h6 class="fw-bold mb-1" style="color: var(--color-primary-dark);">
                                         <i class="fa-solid fa-receipt me-2"></i>{{ __('admin.receipt_paper_size') }}
@@ -71,11 +71,57 @@
                                     </select>
                                 </div>
                             </div>
+                        </div>
+                    </div>
 
-                            <!-- Placeholder for more settings -->
-                            <div class="text-center py-3">
-                                <p class="text-muted small mb-0 italic">
-                                    {{ __('admin.more_settings_will_be_available_in_future_updates') }}</p>
+                    <!-- Store Information Card -->
+                    <div class="card shadow-sm border-0 mt-4" style="border-radius: 16px;">
+                        <div class="card-header bg-white py-3"
+                            style="border-bottom: 2px solid var(--brown-100); border-radius: 16px 16px 0 0;">
+                            <h5 class="mb-0 fw-bold" style="color: var(--color-primary-dark);">
+                                <i class="fa-solid fa-store me-2"></i>{{ __('admin.store_information') }}
+                            </h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <!-- Store Name -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold" style="color: var(--color-primary-dark);">{{ __('admin.store_name') }}</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0" style="border-radius: 10px 0 0 10px;"><i class="fa-solid fa-tag text-muted"></i></span>
+                                    <input type="text" name="store_name" class="form-control border-start-0" 
+                                        value="{{ $settings['store_name'] }}" placeholder="ARTIKA POS" style="border-radius: 0 10px 10px 0;">
+                                </div>
+                                <p class="text-muted small mt-1 mb-0">{{ __('admin.store_name_hint') }}</p>
+                            </div>
+
+                            <!-- Store Phone -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold" style="color: var(--color-primary-dark);">{{ __('admin.store_phone') }}</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0" style="border-radius: 10px 0 0 10px;"><i class="fa-solid fa-phone text-muted"></i></span>
+                                    <input type="text" name="store_phone" class="form-control border-start-0" 
+                                        value="{{ $settings['store_phone'] }}" placeholder="(021) 1234567" style="border-radius: 0 10px 10px 0;">
+                                </div>
+                                <p class="text-muted small mt-1 mb-0">{{ __('admin.store_phone_hint') }}</p>
+                            </div>
+
+                            <!-- Store Email -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold" style="color: var(--color-primary-dark);">{{ __('admin.store_email') }}</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0" style="border-radius: 10px 0 0 10px;"><i class="fa-solid fa-envelope text-muted"></i></span>
+                                    <input type="email" name="store_email" class="form-control border-start-0" 
+                                        value="{{ $settings['store_email'] }}" placeholder="hello@artikapos.com" style="border-radius: 0 10px 10px 0;">
+                                </div>
+                                <p class="text-muted small mt-1 mb-0">{{ __('admin.store_email_hint') }}</p>
+                            </div>
+
+                            <!-- Store Address -->
+                            <div class="mb-0">
+                                <label class="form-label fw-bold" style="color: var(--color-primary-dark);">{{ __('admin.store_address') }}</label>
+                                <textarea name="store_address" class="form-control" rows="2" 
+                                    placeholder="Jl. Raya Utama No. 123..." style="border-radius: 10px;">{{ $settings['store_address'] }}</textarea>
+                                <p class="text-muted small mt-1 mb-0">{{ __('admin.store_address_hint') }}</p>
                             </div>
                         </div>
                         <div class="card-footer bg-light border-0 py-3 text-end" style="border-radius: 0 0 16px 16px;">

@@ -74,11 +74,11 @@
         }
 
         html {
-            zoom: 90%;
             background: var(--gray-50);
         }
 
         body {
+            zoom: 100%;
             background: var(--color-bg);
             min-height: 100vh;
             font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
@@ -146,17 +146,19 @@
         }
 
         /* Fix for Bootstrap Modals & SweetAlert2 with CSS Zoom */
-        .modal-backdrop,
-        .swal2-container,
-        .modal {
-            width: auto !important;
-            height: auto !important;
-            left: 0 !important;
-            right: 0 !important;
-            top: 0 !important;
-            bottom: 0 !important;
-            --color-black: #000000;
+        /* body { zoom: 90% } causes fixed elements to be in the zoomed space.
+           zoom: reset on direct body children (modal, backdrop) restores
+           them to true viewport coordinates so they cover 100% of screen. */
+        .modal-backdrop {
+            zoom: reset;
         }
+        .modal {
+            zoom: reset;
+        }
+        .swal2-container {
+            zoom: reset;
+        }
+
 
         .main-navbar {
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
@@ -1217,6 +1219,40 @@
                             </ul>
                         </div>
 
+                        <!-- Konsinyasi Group -->
+                        <div class="sidebar-dropdown {{ request()->routeIs('admin.consignors*') || request()->routeIs('admin.consignment*') ? 'active' : '' }}">
+                            <div class="sidebar-link sidebar-dropdown-toggle">
+                                <i class="fa-solid fa-handshake"></i> Konsinyasi (Titip Jual)
+                                <i class="fa-solid fa-chevron-right dropdown-arrow"></i>
+                            </div>
+                            <ul class="sidebar-submenu">
+                                <li>
+                                    <a href="{{ route('admin.consignors.index') }}"
+                                        class="submenu-link {{ request()->routeIs('admin.consignors*') ? 'active' : '' }}">
+                                        <i class="fa-solid fa-user-tie"></i> Daftar Penitip
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ route('admin.consignment.items.index') }}"
+                                        class="submenu-link {{ request()->routeIs('admin.consignment.items*') ? 'active' : '' }}">
+                                        <i class="fa-solid fa-boxes-stacked"></i> Barang Konsinyasi
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ route('admin.consignment.settlements.index') }}"
+                                        class="submenu-link {{ request()->routeIs('admin.consignment.settlements*') ? 'active' : '' }}">
+                                        <i class="fa-solid fa-money-bill-transfer"></i> Hutang & Pembayaran
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ route('admin.consignment.reports.index') }}"
+                                        class="submenu-link {{ request()->routeIs('admin.consignment.reports*') ? 'active' : '' }}">
+                                        <i class="fa-solid fa-chart-bar"></i> Laporan Konsinyasi
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+
                         <!-- Reports Group -->
                         @if(App\Models\Setting::get('admin_enable_reports', true))
                             <div
@@ -1361,6 +1397,60 @@
                             class="sidebar-link {{ request()->routeIs('warehouse.stock-movements') ? 'active' : '' }}">
                             <i class="fa-solid fa-arrows-rotate"></i> {{ __('menu.stock_movements') }}
                         </a>
+
+                        {{-- Konsinyasi --}}
+                        <div class="sidebar-dropdown {{ request()->routeIs('warehouse.consignment.*') ? 'active' : '' }}">
+                            <div class="sidebar-link sidebar-dropdown-toggle">
+                                <i class="fa-solid fa-handshake"></i> Konsinyasi (Titip Jual)
+                                <i class="fa-solid fa-chevron-right dropdown-arrow"></i>
+                            </div>
+                            <ul class="sidebar-submenu">
+                                <li>
+                                    <a href="{{ route('warehouse.consignment.items.index') }}"
+                                        class="submenu-link {{ request()->routeIs('warehouse.consignment.items*') ? 'active' : '' }}">
+                                        <i class="fa-solid fa-boxes-stacked"></i> Barang Konsinyasi
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        {{-- Pre-Order Supplier --}}
+                        <div class="sidebar-dropdown {{ request()->routeIs('warehouse.pre-orders*') ? 'active' : '' }}">
+                            <div class="sidebar-link sidebar-dropdown-toggle">
+                                <i class="fa-solid fa-receipt"></i> Pre-Order Supplier
+                                <i class="fa-solid fa-chevron-right dropdown-arrow"></i>
+                            </div>
+                            <ul class="sidebar-submenu">
+                                <li>
+                                    <a href="{{ route('warehouse.pre-orders.index') }}"
+                                        class="submenu-link {{ request()->routeIs('warehouse.pre-orders*') ? 'active' : '' }}">
+                                        <i class="fa-solid fa-list"></i> Daftar Pre-Order
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        {{-- Pengaturan Gudang --}}
+                        <div class="sidebar-dropdown {{ request()->routeIs('warehouse.categories*') || request()->routeIs('warehouse.units*') ? 'active' : '' }}">
+                            <div class="sidebar-link sidebar-dropdown-toggle">
+                                <i class="fa-solid fa-tags"></i> Pengaturan Gudang
+                                <i class="fa-solid fa-chevron-right dropdown-arrow"></i>
+                            </div>
+                            <ul class="sidebar-submenu">
+                                <li>
+                                    <a href="{{ route('warehouse.categories.index') }}"
+                                        class="submenu-link {{ request()->routeIs('warehouse.categories*') ? 'active' : '' }}">
+                                        <i class="fa-solid fa-layer-group"></i> Kategori Produk
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ route('warehouse.units.index') }}"
+                                        class="submenu-link {{ request()->routeIs('warehouse.units*') ? 'active' : '' }}">
+                                        <i class="fa-solid fa-ruler"></i> Satuan
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     @endif
 
                     <div class="mt-auto px-1 py-3">
@@ -1457,6 +1547,18 @@
                                 parentDropdown.classList.add('active');
                             }
                         }
+
+                        // ── Modal Teleport Fix ──────────────────────────────────────────
+                        // Modals rendered inside .main-content (inside container-fluid > row)
+                        // will have their position:fixed measured against the zoomed html
+                        // root, causing the backdrop to not cover the full screen.
+                        // Solution: move every .modal directly under <body> so it uses
+                        // the true viewport as its containing block.
+                        document.querySelectorAll('.modal').forEach(function (modal) {
+                            if (modal.parentElement !== document.body) {
+                                document.body.appendChild(modal);
+                            }
+                        });
                     });
                 </script>
 
