@@ -90,7 +90,7 @@
                             </td>
                             <td class="text-center">
                                 @if($item->expiry_date)
-                                    <span class="{{ $item->expiry_date->isPast() ? 'text-danger fw-bold' : ($item->expiry_date->diffInDays(now()) <= 7 ? 'text-warning fw-bold' : 'text-muted') }}">
+                                    <span class="{{ $item->expiry_date->isPast() ? 'text-danger fw-bold' : (now()->diffInDays($item->expiry_date) <= 7 ? 'text-warning fw-bold' : 'text-muted') }}">
                                         {{ $item->expiry_date->format('d M Y') }}
                                     </span>
                                 @else

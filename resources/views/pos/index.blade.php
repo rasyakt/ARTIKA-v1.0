@@ -2338,7 +2338,10 @@
                                 }
 
                                 $expiry = $product->next_expiry;
-                                $isExpiringSoon = $expiry && \Carbon\Carbon::parse($expiry)->diffInDays(now()->startOfDay()) < 30;
+                                $daysUntilExpiry = $expiry
+                                    ? (int) now()->startOfDay()->diffInDays(\Carbon\Carbon::parse($expiry)->startOfDay())
+                                    : 0;
+                                $isExpiringSoon = $expiry && $daysUntilExpiry > 0 && $daysUntilExpiry < 30;
                             @endphp
                             <div class="product-card {{ $isOutOfStock ? 'opacity-50' : '' }}"
                                 data-product-id="{{ $product->id }}" data-category="{{ $product->category_id }}"
@@ -2356,7 +2359,7 @@
                                 @if($isExpiringSoon)
                                     <div class="expiry-badge expiring bg-warning text-dark">
                                         <i class="fas fa-hourglass-half"></i>
-                                        {{ (int) \Carbon\Carbon::parse($expiry)->diffInDays(now()->startOfDay()) }}d
+                                        {{ $daysUntilExpiry }}d
                                     </div>
                                 @endif
 
