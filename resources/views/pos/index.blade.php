@@ -2957,6 +2957,7 @@
             let scanTimeout = null;
             const SCAN_THRESHOLD = 500; // [RELAXED] Increased from 200ms to 500ms for slower scanners
             const MIN_BARCODE_LENGTH = 3;
+            const MAX_BARCODE_LENGTH = 30; // [NEW] Limit to skip accidental QR/long scans
             const SUBMIT_INACTIVITY_MS = 500; // [RELAXED] Increased from 300ms to 500ms for very slow scanners
 
             document.addEventListener('keydown', function (e) {
@@ -2999,6 +3000,16 @@
                     const finalBarcode = isFocused ? barcodeInput.value.trim() : barcodeBuffer.trim();
                     if (finalBarcode.length >= MIN_BARCODE_LENGTH) {
                         e.preventDefault();
+
+                        // Safety Check: Avoid ridiculously long QR/URL scans
+                        if (finalBarcode.length > MAX_BARCODE_LENGTH) {
+                            console.warn(`[Scanner] Ignored long scan (${finalBarcode.length} chars): ${finalBarcode}`);
+                            showToast('warning', 'Kode terlalu panjang! Pastikan scan Barcode, bukan QR Code.');
+                            barcodeBuffer = '';
+                            if (barcodeInput) barcodeInput.value = '';
+                            return;
+                        }
+
                         console.log(`[Scanner] Processing final barcode: ${finalBarcode}`);
                         isProcessing = true;
                         handleScannedBarcode(finalBarcode);
@@ -3040,6 +3051,14 @@
                     if (barcodeBuffer.length >= MIN_BARCODE_LENGTH) {
                         scanTimeout = setTimeout(() => {
                             const currentVal = isFocused ? barcodeInput.value.trim() : barcodeBuffer.trim();
+                            
+                            // Check max length first
+                            if (currentVal.length > MAX_BARCODE_LENGTH) {
+                                barcodeBuffer = '';
+                                if (barcodeInput) barcodeInput.value = '';
+                                return;
+                            }
+
                             // Auto-process if long enough and no match found yet via instant match
                             if (currentVal.length >= 8 && !isProcessing) {
                                 console.log(`[Timeout] Auto-processing: ${currentVal}`);
@@ -3077,6 +3096,16 @@
             function handleScannedBarcode(barcode) {
                 if (!barcode) return;
                 barcode = barcode.trim();
+
+                // Double check length here just in case of programmatic calls
+                if (barcode.length > MAX_BARCODE_LENGTH) {
+                    showToast('warning', 'Kode terlalu panjang (QR ter-scan?)');
+                    barcodeBuffer = '';
+                    const barcodeInput = document.getElementById('barcodeScannerInput');
+                    if (barcodeInput) barcodeInput.value = '';
+                    return;
+                }
+
                 console.log(`[Diagnostic] Processing barcode: "${barcode}"`);
 
                 // First check DOM for already loaded products (fast path)
