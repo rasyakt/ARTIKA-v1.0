@@ -21,7 +21,6 @@ class SuperadminController extends Controller
             'db_connection' => config('database.default'),
             'db_version' => $this->getDbVersion(),
             'server_time' => now()->toDateTimeString(),
-            'is_maintenance' => app()->isDownForMaintenance(),
             'environment' => app()->environment(),
         ];
 
@@ -65,42 +64,6 @@ class SuperadminController extends Controller
         return $stats;
     }
 
-    /**
-     * Toggle Maintenance Mode.
-     */
-    public function toggleMaintenance(Request $request)
-    {
-        if (app()->isDownForMaintenance()) {
-            Artisan::call('up');
-
-            // Clear the bypass cookies
-            return back()
-                ->withCookie(cookie()->forget('laravel_maintenance'))
-                ->with('success', 'Application is now LIVE.');
-        } else {
-            // Verify superadmin password before enabling maintenance mode
-            $password = $request->input('password');
-            if (!$password || !\Illuminate\Support\Facades\Hash::check($password, $request->user()->password)) {
-                return back()->with('error', 'Password salah. Maintenance Mode tidak diaktifkan.');
-            }
-
-            // Internal secret token (used for cookie HMAC only, never exposed as URL)
-            $token = bin2hex(random_bytes(16));
-            Artisan::call('down', [
-                '--secret' => $token
-            ]);
-
-            \Illuminate\Support\Facades\Log::warning("Maintenance Mode enabled by Superadmin ID: " . $request->user()->id);
-
-            // Set the bypass cookie DIRECTLY on this browser — no shareable URL.
-            // Only this specific browser session gets maintenance bypass access.
-            $bypassCookie = \Illuminate\Foundation\Http\MaintenanceModeBypassCookie::create($token);
-
-            return back()
-                ->withCookie($bypassCookie)
-                ->with('success', 'Maintenance Mode berhasil diaktifkan. Hanya browser ini yang dapat mengakses website.');
-        }
-    }
 
     /**
      * Verify Superadmin Password via AJAX.

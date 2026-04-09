@@ -2,23 +2,16 @@
 
 @section('content')
     <div class="container-fluid py-4">
-        <div class="row mb-4">
+
+        {{-- Page Header --}}
+        <div class="row mb-4 align-items-center">
             <div class="col-12">
-                <h4 class="fw-bold" style="color: var(--color-primary-dark);">
+                <h4 class="fw-bold mb-1" style="color: var(--color-primary-dark);">
                     <i class="fa-solid fa-code me-2"></i>Developer Tools
                 </h4>
-                <p class="text-muted">High-level system management and technical utilities.</p>
+                <p class="text-muted mb-0">High-level system management and technical utilities.</p>
             </div>
         </div>
-
-        @if($systemInfo['is_maintenance'])
-            <div class="alert alert-warning border-0 shadow-sm mb-4"
-                style="border-radius: 12px; border-left: 5px solid var(--color-warning);">
-                <h6 class="fw-bold mb-1"><i class="fa-solid fa-triangle-exclamation me-2"></i>Maintenance Mode is Active</h6>
-                <p class="small mb-0">Aplikasi sedang dalam mode maintenance. Hanya browser ini yang memiliki akses bypass.
-                    Untuk menonaktifkan dari terminal, jalankan <code>php artisan up</code>.</p>
-            </div>
-        @endif
 
         @if(session('success'))
             <div class="alert alert-success border-0 shadow-sm mb-4" style="border-radius: 12px;">
@@ -26,266 +19,173 @@
             </div>
         @endif
 
-        <div class="row g-4">
-            <!-- System Info Board -->
-            <div class="col-lg-8">
-                <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px;">
-                    <div class="card-header bg-white py-3"
-                        style="border-bottom: 2px solid var(--brown-100); border-radius: 16px 16px 0 0;">
-                        <h5 class="mb-0 fw-bold" style="color: var(--color-primary-dark);">
-                            <i class="fa-solid fa-server me-2"></i>System Information
-                        </h5>
-                    </div>
-                    <div class="card-body p-4">
-                        <div class="row g-3">
-                            <div class="col-md-6 col-lg-4">
-                                <div class="p-3 bg-light" style="border-radius: 12px;">
-                                    <label class="text-muted small d-block mb-1">Laravel Version</label>
-                                    <span class="fw-bold">{{ $systemInfo['laravel_version'] }}</span>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="p-3 bg-light" style="border-radius: 12px;">
-                                    <label class="text-muted small d-block mb-1">PHP Version</label>
-                                    <span class="fw-bold">{{ $systemInfo['php_version'] }}</span>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="p-3 bg-light" style="border-radius: 12px;">
-                                    <label class="text-muted small d-block mb-1">Environment</label>
-                                    <span
-                                        class="badge {{ $systemInfo['environment'] === 'production' ? 'bg-danger' : 'bg-success' }}"
-                                        style="border-radius: 8px;">
-                                        {{ strtoupper($systemInfo['environment']) }}
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="p-3 bg-light" style="border-radius: 12px;">
-                                    <label class="text-muted small d-block mb-1">Database Type</label>
-                                    <span class="fw-bold text-uppercase">{{ $systemInfo['db_connection'] }}</span>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="p-3 bg-light" style="border-radius: 12px;">
-                                    <label class="text-muted small d-block mb-1">Database Version</label>
-                                    <span class="fw-bold small">{{ $systemInfo['db_version'] }}</span>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="p-3 bg-light" style="border-radius: 12px;">
-                                    <label class="text-muted small d-block mb-1">Server OS</label>
-                                    <span class="fw-bold">{{ $systemInfo['server_os'] }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-3 p-2 text-center">
-                            <small class="text-muted">
-                                <i class="fa-solid fa-clock me-1"></i>Server Time: {{ $systemInfo['server_time'] }}
-                            </small>
-                        </div>
-                    </div>
-                </div>
+        @if(session('error'))
+            <div class="alert alert-danger border-0 shadow-sm mb-4" style="border-radius: 12px;">
+                <i class="fa-solid fa-circle-xmark me-2"></i>{{ session('error') }}
+            </div>
+        @endif
 
-                <!-- Developer Actions Row -->
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <div class="card border-0 shadow-sm h-100" style="border-radius: 16px;">
-                            <div class="card-body p-4 text-center">
-                                <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3"
-                                    style="width: 64px; height: 64px; color: var(--color-primary-dark);">
-                                    <i class="fa-solid fa-broom fa-2x"></i>
-                                </div>
-                                <h5 class="fw-bold mb-2">System Cache</h5>
-                                <p class="text-muted small mb-4">Clear all application, config, route, and view caches.</p>
-                                <form action="{{ route('superadmin.clear-cache') }}" method="POST">
-                                    @csrf
-                                    <button type="submit" class="btn btn-outline-primary w-100"
-                                        style="border-radius: 12px;">
-                                        Clear Cache
-                                    </button>
-                                </form>
-                            </div>
+        {{-- System Info Card (Full Width) --}}
+        <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px;">
+            <div class="card-header bg-white py-3"
+                style="border-bottom: 2px solid var(--brown-100); border-radius: 16px 16px 0 0;">
+                <h5 class="mb-0 fw-bold" style="color: var(--color-primary-dark);">
+                    <i class="fa-solid fa-server me-2"></i>System Information
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <div class="p-3 h-100 bg-light" style="border-radius: 12px;">
+                            <label class="text-muted small d-block mb-1">Laravel Version</label>
+                            <span class="fw-bold">{{ $systemInfo['laravel_version'] }}</span>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="card border-0 shadow-sm h-100" style="border-radius: 16px;">
-                            <div class="card-body p-4 text-center">
-                                <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3"
-                                    style="width: 64px; height: 64px; color: var(--color-primary-dark);">
-                                    <i class="fa-solid fa-bolt fa-2x"></i>
-                                </div>
-                                <h5 class="fw-bold mb-2">Optimize</h5>
-                                <p class="text-muted small mb-4">Cache configuration and routes for production speed.</p>
-                                <form action="{{ route('superadmin.optimize') }}" method="POST">
-                                    @csrf
-                                    <button type="submit" class="btn btn-outline-success w-100"
-                                        style="border-radius: 12px;">
-                                        Run Optimize
-                                    </button>
-                                </form>
-                            </div>
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <div class="p-3 h-100 bg-light" style="border-radius: 12px;">
+                            <label class="text-muted small d-block mb-1">PHP Version</label>
+                            <span class="fw-bold">{{ $systemInfo['php_version'] }}</span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <div class="p-3 h-100 bg-light" style="border-radius: 12px;">
+                            <label class="text-muted small d-block mb-1">Environment</label>
+                            <span class="badge {{ $systemInfo['environment'] === 'production' ? 'bg-danger' : 'bg-success' }}"
+                                style="border-radius: 8px;">
+                                {{ strtoupper($systemInfo['environment']) }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <div class="p-3 h-100 bg-light" style="border-radius: 12px;">
+                            <label class="text-muted small d-block mb-1">Database Type</label>
+                            <span class="fw-bold text-uppercase">{{ $systemInfo['db_connection'] }}</span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <div class="p-3 h-100 bg-light" style="border-radius: 12px;">
+                            <label class="text-muted small d-block mb-1">Database Version</label>
+                            <span class="fw-bold small">{{ $systemInfo['db_version'] }}</span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <div class="p-3 h-100 bg-light" style="border-radius: 12px;">
+                            <label class="text-muted small d-block mb-1">Server OS</label>
+                            <span class="fw-bold">{{ $systemInfo['server_os'] }}</span>
                         </div>
                     </div>
                 </div>
-                <!-- Database Overview -->
-                <div class="card border-0 shadow-sm mt-4" style="border-radius: 16px;">
-                    <div class="card-header bg-white py-3"
-                        style="border-bottom: 2px solid var(--brown-100); border-radius: 16px 16px 0 0;">
-                        <h5 class="mb-0 fw-bold" style="color: var(--color-primary-dark);">
-                            <i class="fa-solid fa-database me-2"></i>Database Overview
-                        </h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="bg-light sticky-top">
-                                    <tr>
-                                        <th class="ps-4 py-3 text-muted small text-uppercase fw-bold">Table Name</th>
-                                        <th class="py-3 text-muted small text-uppercase fw-bold text-end pe-4">Total Records
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($dbStats as $stat)
-                                        <tr>
-                                            <td class="ps-4">
-                                                <span class="fw-medium">{{ $stat['name'] }}</span>
-                                            </td>
-                                            <td class="text-end pe-4">
-                                                <span class="badge bg-light text-dark px-3 py-2"
-                                                    style="border-radius: 8px; font-size: 0.9rem;">
-                                                    {{ number_format($stat['count']) }}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+                <div class="mt-3 pt-3 border-top text-center">
+                    <small class="text-muted">
+                        <i class="fa-solid fa-clock me-1"></i>Server Time: {{ $systemInfo['server_time'] }}
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        {{-- Developer Actions Row (3 equal cards) --}}
+        <div class="row g-4 mb-4">
+            {{-- Clear Cache --}}
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100" style="border-radius: 16px;">
+                    <div class="card-body p-4 text-center d-flex flex-column">
+                        <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3 mx-auto"
+                            style="width: 64px; height: 64px; color: var(--color-primary-dark);">
+                            <i class="fa-solid fa-broom fa-2x"></i>
                         </div>
-                    </div>
-                    <div class="card-footer bg-white border-0 py-3 text-center" style="border-radius: 0 0 16px 16px;">
-                        <small class="text-muted">Total Tables: {{ count($dbStats) }}</small>
+                        <h5 class="fw-bold mb-2">System Cache</h5>
+                        <p class="text-muted small mb-4 flex-grow-1">Clear all application, config, route, and view caches.</p>
+                        <form action="{{ route('superadmin.clear-cache') }}" method="POST">
+                            @csrf
+                            <button type="submit" class="btn btn-outline-primary w-100" style="border-radius: 12px;">
+                                <i class="fa-solid fa-trash-can me-2"></i>Clear Cache
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
 
-            <!-- Right Side: Maintenance & Logs -->
-            <div class="col-lg-4">
-                <!-- Maintenance Mode -->
-                <div class="card border-0 shadow-sm mb-4 {{ $systemInfo['is_maintenance'] ? 'bg-danger text-white' : '' }}"
-                    style="border-radius: 16px;">
-                    <div class="card-body p-4 text-center">
-                        <div class="rounded-circle {{ $systemInfo['is_maintenance'] ? 'bg-white text-danger' : 'bg-light text-danger' }} d-inline-flex align-items-center justify-content-center mb-3"
-                            style="width: 64px; height: 64px;">
-                            <i class="fa-solid fa-power-off fa-2x"></i>
+            {{-- Optimize --}}
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100" style="border-radius: 16px;">
+                    <div class="card-body p-4 text-center d-flex flex-column">
+                        <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3 mx-auto"
+                            style="width: 64px; height: 64px; color: var(--color-primary-dark);">
+                            <i class="fa-solid fa-bolt fa-2x"></i>
                         </div>
-                        <h5 class="fw-bold mb-2">Maintenance Mode</h5>
-                        <p class="small mb-4 {{ $systemInfo['is_maintenance'] ? 'text-white-50' : 'text-muted' }}">
-                            {{ $systemInfo['is_maintenance']
-        ? 'The application is currently offline for users.'
-        : 'Lock access to the application for all users except developers.' }}
-                        </p>
-                        <form action="{{ route('superadmin.toggle-maintenance') }}" method="POST" id="maintenanceForm">
+                        <h5 class="fw-bold mb-2">Optimize</h5>
+                        <p class="text-muted small mb-4 flex-grow-1">Cache configuration and routes for production speed.</p>
+                        <form action="{{ route('superadmin.optimize') }}" method="POST">
                             @csrf
-                            <input type="hidden" name="password" id="maintenancePassword">
-                            @if($systemInfo['is_maintenance'])
-                                <button type="submit" class="btn btn-light w-100 fw-bold"
-                                    style="border-radius: 12px; color: var(--color-danger);">
-                                    Go Live Now
-                                </button>
-                            @else
-                                <button type="button" class="btn btn-danger w-100" style="border-radius: 12px; color: white;"
-                                    onclick="askMaintenancePassword()">
-                                    Enable Maintenance
-                                </button>
-                            @endif
+                            <button type="submit" class="btn btn-outline-success w-100" style="border-radius: 12px;">
+                                <i class="fa-solid fa-rocket me-2"></i>Run Optimize
+                            </button>
                         </form>
-
-                        @if(!$systemInfo['is_maintenance'])
-                        <script>
-                            function askMaintenancePassword() {
-                                Swal.fire({
-                                    title: '<i class="fa-solid fa-shield-halved" style="color: var(--color-primary); margin-bottom: 0.5rem; font-size: 1.5rem;"></i><br>Verifikasi Keamanan',
-                                    html: '<p style="color: var(--gray-600); font-size: 0.9rem; margin-bottom: 0;">Masukkan password akun Anda untuk mengaktifkan <strong>Maintenance Mode</strong>.</p>',
-                                    input: 'password',
-                                    inputPlaceholder: '••••••••',
-                                    inputAttributes: {
-                                        autocapitalize: 'off',
-                                        autocomplete: 'current-password',
-                                        style: 'border-radius: 12px; border: 2px solid var(--brown-200); padding: 0.75rem 1rem; font-size: 1rem; text-align: center; letter-spacing: 3px;'
-                                    },
-                                    showCancelButton: true,
-                                    confirmButtonText: '<i class="fa-solid fa-lock me-2"></i>Konfirmasi & Aktifkan',
-                                    cancelButtonText: 'Batal',
-                                    customClass: {
-                                        popup: 'artika-swal-popup',
-                                        title: 'artika-swal-title',
-                                        confirmButton: 'artika-swal-confirm-btn',
-                                        cancelButton: 'artika-swal-cancel-btn',
-                                    },
-                                    buttonsStyling: false,
-                                    showLoaderOnConfirm: true,
-                                    preConfirm: (password) => {
-                                        if (!password) {
-                                            Swal.showValidationMessage('Password tidak boleh kosong!');
-                                            return false;
-                                        }
-                                        return fetch("{{ route('superadmin.verify-password') }}", {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json',
-                                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                                'Accept': 'application/json'
-                                            },
-                                            body: JSON.stringify({ password: password })
-                                        })
-                                        .then(response => {
-                                            if (!response.ok) {
-                                                return response.json().then(data => {
-                                                    throw new Error(data.message || 'Password salah.');
-                                                });
-                                            }
-                                            return response.json();
-                                        })
-                                        .then(data => {
-                                            return password;
-                                        })
-                                        .catch(error => {
-                                            Swal.showValidationMessage(
-                                                `<i class="fa-solid fa-circle-xmark me-1"></i> ${error.message}`
-                                            );
-                                        });
-                                    },
-                                    allowOutsideClick: () => !Swal.isLoading()
-                                }).then((result) => {
-                                    if (result.isConfirmed) {
-                                        document.getElementById('maintenancePassword').value = result.value;
-                                        document.getElementById('maintenanceForm').submit();
-                                    }
-                                });
-                            }
-                        </script>
-                        @endif
                     </div>
                 </div>
+            </div>
 
-                <!-- Logs Link Card -->
-                <div class="card border-0 shadow-sm" style="border-radius: 16px;">
-                    <div class="card-body p-4 text-center">
-                        <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3"
+            {{-- System Logs --}}
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100" style="border-radius: 16px;">
+                    <div class="card-body p-4 text-center d-flex flex-column">
+                        <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3 mx-auto"
                             style="width: 64px; height: 64px; color: var(--color-primary-dark);">
                             <i class="fa-solid fa-terminal fa-2x"></i>
                         </div>
                         <h5 class="fw-bold mb-2">System Logs</h5>
-                        <p class="text-muted small mb-4">Monitor errors and developer-level debug messages.</p>
-                        <a href="{{ route('superadmin.logs') }}" class="btn btn-outline-dark w-100"
-                            style="border-radius: 12px;">
-                            View Latest Logs
+                        <p class="text-muted small mb-4 flex-grow-1">Monitor errors and developer-level debug messages.</p>
+                        <a href="{{ route('superadmin.logs') }}" class="btn btn-outline-dark w-100" style="border-radius: 12px;">
+                            <i class="fa-solid fa-magnifying-glass me-2"></i>View Latest Logs
                         </a>
                     </div>
                 </div>
             </div>
         </div>
+
+        {{-- Database Overview (Full Width) --}}
+        <div class="card border-0 shadow-sm" style="border-radius: 16px;">
+            <div class="card-header bg-white py-3"
+                style="border-bottom: 2px solid var(--brown-100); border-radius: 16px 16px 0 0;">
+                <div class="d-flex align-items-center justify-content-between">
+                    <h5 class="mb-0 fw-bold" style="color: var(--color-primary-dark);">
+                        <i class="fa-solid fa-database me-2"></i>Database Overview
+                    </h5>
+                    <span class="badge bg-light text-muted fw-normal px-3 py-2" style="border-radius: 10px; font-size: 0.8rem;">
+                        {{ count($dbStats) }} tables
+                    </span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light sticky-top">
+                            <tr>
+                                <th class="ps-4 py-3 text-muted small text-uppercase fw-bold">#</th>
+                                <th class="py-3 text-muted small text-uppercase fw-bold">Table Name</th>
+                                <th class="py-3 text-muted small text-uppercase fw-bold text-end pe-4">Total Records</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($dbStats as $index => $stat)
+                                <tr>
+                                    <td class="ps-4 text-muted small">{{ $index + 1 }}</td>
+                                    <td>
+                                        <span class="fw-medium">{{ $stat['name'] }}</span>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <span class="badge bg-light text-dark px-3 py-2"
+                                            style="border-radius: 8px; font-size: 0.9rem;">
+                                            {{ number_format($stat['count']) }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </div>
 @endsection

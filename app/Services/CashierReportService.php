@@ -60,6 +60,7 @@ class CashierReportService
 
         // Payment method breakdown
         $paymentBreakdown = Transaction::whereBetween('created_at', [$startDate, $endDate])
+            ->where('status', 'completed')
             ->select('payment_method', DB::raw('COUNT(*) as count'), DB::raw('SUM(total_amount) as total'))
             ->groupBy('payment_method')
             ->get()
@@ -226,7 +227,8 @@ class CashierReportService
         $endDate = $endDate ? Carbon::parse($endDate)->endOfDay() : Carbon::now()->endOfDay();
 
         $query = Transaction::with('user')
-            ->whereBetween('created_at', [$startDate, $endDate]);
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->where('status', 'completed');
 
         if ($search) {
             $query->whereHas('user', function ($q) use ($search) {

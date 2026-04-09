@@ -1,3 +1,11 @@
+@php
+    if (!isset($elements)) {
+        $elements = method_exists($paginator, 'elements')
+            ? $paginator->elements()
+            : [[$paginator->currentPage() => $paginator->url($paginator->currentPage())]];
+    }
+@endphp
+
 @if ($paginator->hasPages())
     <nav class="d-flex justify-content-center mt-4">
         <ul class="pagination pagination-custom shadow-sm p-1 bg-white rounded-pill mb-0"

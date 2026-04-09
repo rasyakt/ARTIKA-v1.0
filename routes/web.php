@@ -189,7 +189,6 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/dashboard', [\App\Http\Controllers\SuperadminController::class , 'index'])->name('dashboard');
             Route::post('/clear-cache', [\App\Http\Controllers\SuperadminController::class , 'clearCache'])->name('clear-cache');
             Route::post('/optimize', [\App\Http\Controllers\SuperadminController::class , 'optimize'])->name('optimize');
-            Route::post('/toggle-maintenance', [\App\Http\Controllers\SuperadminController::class , 'toggleMaintenance'])->name('toggle-maintenance');
             Route::post('/verify-password', [\App\Http\Controllers\SuperadminController::class , 'verifyPassword'])->name('verify-password');
             Route::get('/logs', [\App\Http\Controllers\SuperadminController::class , 'logs'])->name('logs');
             Route::get('/settings', [\App\Http\Controllers\SuperadminController::class , 'settings'])->name('settings');

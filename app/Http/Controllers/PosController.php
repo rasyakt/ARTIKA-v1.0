@@ -111,6 +111,7 @@ class PosController extends Controller
         $endDate   = $request->filled('end_date')   ? $request->end_date   : today()->toDateString();
 
         $query = Transaction::where('user_id', $userId)
+            ->where('status', 'completed')
             ->whereDate('created_at', '>=', $startDate)
             ->whereDate('created_at', '<=', $endDate)
             ->with('items.product');

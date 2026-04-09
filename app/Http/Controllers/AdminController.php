@@ -20,9 +20,16 @@ class AdminController extends Controller
 {
     public function index()
     {
-        // Statistics
-        $totalSales = Transaction::where('status', 'completed')->sum('total_amount');
-        $totalTransactions = Transaction::where('status', 'completed')->count();
+        // Statistics — scoped to current month to match "Bulan ini" label
+        $monthStart = Carbon::now()->startOfMonth();
+        $monthEnd = Carbon::now()->endOfMonth();
+
+        $totalSales = Transaction::where('status', 'completed')
+            ->whereBetween('created_at', [$monthStart, $monthEnd])
+            ->sum('total_amount');
+        $totalTransactions = Transaction::where('status', 'completed')
+            ->whereBetween('created_at', [$monthStart, $monthEnd])
+            ->count();
         $totalProducts = Product::count();
 
         // Supplier metrics (fallback to 0 if Supplier model/table doesn't exist yet)
