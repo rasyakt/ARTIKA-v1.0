@@ -56,15 +56,35 @@ class PosController extends Controller
         $query = \App\Models\Product::with('stocks');
 
         if ($searchTerm !== '') {
-            // If input looks like a barcode (digits only), do exact match first (uses unique index)
-            if (ctype_digit($searchTerm)) {
-                $query->where(function ($q) use ($searchTerm) {
-                    $q->where('barcode', $searchTerm)
-                      ->orWhereRaw('MATCH(name, barcode) AGAINST(? IN BOOLEAN MODE)', [$searchTerm . '*']);
-                });
-            } else {
-                // Use FULLTEXT search: avoids full table scan, uses idx_products_fulltext index
-                $query->whereRaw('MATCH(name, barcode) AGAINST(? IN BOOLEAN MODE)', [$searchTerm . '*']);
+            try {
+                // Attempt FULLTEXT search first (fastest)
+                if (ctype_digit($searchTerm)) {
+                    $query->where(function ($q) use ($searchTerm) {
+                        $q->where('barcode', $searchTerm)
+                          ->orWhereRaw('MATCH(name, barcode) AGAINST(? IN BOOLEAN MODE)', [$searchTerm . '*']);
+                    });
+                } else {
+                    $query->whereRaw('MATCH(name, barcode) AGAINST(? IN BOOLEAN MODE)', [$searchTerm . '*']);
+                }
+
+                // Reliability Check: If FULLTEXT returns no results, try a broader LIKE search.
+                // We use a clone to check count without consuming the original query.
+                $resultsCount = (clone $query)->limit(1)->count();
+                if ($resultsCount === 0) {
+                    $query = \App\Models\Product::with('stocks')
+                        ->where(function ($q) use ($searchTerm) {
+                            $q->where('name', 'LIKE', '%' . $searchTerm . '%')
+                              ->orWhere('barcode', 'LIKE', '%' . $searchTerm . '%');
+                        });
+                }
+            } catch (\Exception $e) {
+                // Emergency Fallback: If FULLTEXT index is missing or server doesn't support it
+                \Log::warning("POS Search FULLTEXT issue (falling back to LIKE): " . $e->getMessage());
+                $query = \App\Models\Product::with('stocks')
+                    ->where(function ($q) use ($searchTerm) {
+                        $q->where('name', 'LIKE', '%' . $searchTerm . '%')
+                          ->orWhere('barcode', 'LIKE', '%' . $searchTerm . '%');
+                    });
             }
         }
 

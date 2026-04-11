@@ -3672,7 +3672,10 @@
                 }
 
                 fetch(`{{ route('pos.search') }}?q=${encodeURIComponent(searchTerm)}&category_id=${categoryId}`)
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) throw new Error('Server returned ' + response.status);
+                        return response.json();
+                    })
                     .then(data => {
                         if (data.success) {
                             renderProducts(data.data);
@@ -3681,6 +3684,10 @@
                     .catch(err => {
                         console.error('Error fetching products:', err);
                         if (grid) grid.style.opacity = '1';
+                        // Only show toast if it's not a manual abort or empty search
+                        if (searchTerm.length > 0) {
+                            showToast('error', 'Gagal memuat produk. Hubungi Admin jika masalah berlanjut.');
+                        }
                     });
             }, 300); // 300ms debounce
         }
