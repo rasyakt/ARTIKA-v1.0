@@ -3,10 +3,22 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PwaOrderController;
 
 
 Route::get('/', function () {
     return redirect()->route('login');
+});
+
+// =============================================
+// PWA Storefront (Public — No Auth Required)
+// =============================================
+Route::prefix('pwa')->name('pwa.')->group(function () {
+    Route::get('/', [PwaOrderController::class, 'storefront'])->name('storefront');
+    Route::get('/api/products', [PwaOrderController::class, 'apiProducts'])->name('api.products');
+    Route::get('/api/store-status', [PwaOrderController::class, 'apiStoreStatus'])->name('api.store-status');
+    Route::post('/api/orders', [PwaOrderController::class, 'apiCreateOrder'])->name('api.orders.create');
+    Route::get('/api/orders/history', [PwaOrderController::class, 'apiOrderHistory'])->name('api.orders.history');
 });
 
 
@@ -226,6 +238,14 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/held/{id}/resume', [\App\Http\Controllers\PosController::class , 'resumeHeldTransaction'])->name('held.resume');
             Route::delete('/held/{id}', [\App\Http\Controllers\PosController::class , 'deleteHeldTransaction'])->name('held.delete');
             Route::get('/receipt/{id}', [\App\Http\Controllers\PosController::class , 'printReceipt'])->name('receipt');
+
+            // PWA Orders Management (Cashier Dashboard)
+            Route::get('/pwa-orders', [PwaOrderController::class, 'cashierDashboard'])->name('pwa-orders');
+            Route::get('/pwa-orders/api/list', [PwaOrderController::class, 'apiOrdersList'])->name('pwa-orders.api.list');
+            Route::post('/pwa-orders/{id}/process', [PwaOrderController::class, 'processOrder'])->name('pwa-orders.process');
+            Route::post('/pwa-orders/{id}/complete', [PwaOrderController::class, 'completeOrder'])->name('pwa-orders.complete');
+            Route::post('/pwa-orders/{id}/cancel', [PwaOrderController::class, 'cancelOrder'])->name('pwa-orders.cancel');
+            Route::get('/pwa-orders/{id}/receipt', [PwaOrderController::class, 'printReceipt'])->name('pwa-orders.receipt');
         }
         );
 

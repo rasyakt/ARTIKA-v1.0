@@ -649,7 +649,9 @@
 
         /* QUICK BUTTONS (Favorites) */
         .quick-buttons-section {
-            padding: 0.75rem 1rem 0;
+            padding: 0.75rem 1rem;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--gray-200);
         }
         .quick-buttons-header {
             display: flex;
@@ -658,27 +660,31 @@
             font-weight: 700;
             font-size: 0.85rem;
             color: var(--color-primary-dark);
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+            background: var(--card-bg);
+            z-index: 5;
         }
         .quick-buttons-grid {
-            display: flex;
-            gap: 0.6rem;
-            overflow-x: auto;
-            padding-bottom: 0.75rem;
-            scroll-snap-type: x mandatory;
-            -webkit-overflow-scrolling: touch;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 0.75rem;
+            max-height: 220px;
+            overflow-y: auto;
+            padding-right: 5px;
         }
         .quick-buttons-grid::-webkit-scrollbar {
-            height: 4px;
+            width: 4px;
+        }
+        .quick-buttons-grid::-webkit-scrollbar-thumb {
+            background: var(--primary-light);
+            border-radius: 10px;
         }
         .quick-buttons-grid::-webkit-scrollbar-track {
             background: transparent;
-        }
-        .quick-buttons-grid::-webkit-scrollbar-thumb {
-            background: var(--color-secondary-light);
-            border-radius: 10px;
         }
         .quick-btn {
             display: flex;
@@ -769,6 +775,9 @@
         [data-bs-theme="dark"] .quick-btn {
             background: linear-gradient(135deg, #3b2e1a 0%, #2c2316 100%);
             border-color: #5a4a32;
+        }
+        [data-bs-theme="dark"] .quick-buttons-header {
+            color: #f5f5f5;
         }
         [data-bs-theme="dark"] .quick-btn:hover {
             border-color: #f59e0b;
@@ -2191,6 +2200,13 @@
                     style="height: 38px; width: auto;">
             </div>
             <div class="navbar-right">
+                <!-- PWA Orders Button -->
+                <a href="{{ route('pos.pwa-orders') }}" class="btn btn-shortcut-help me-2" title="Pesanan PWA" id="pwaOrdersNavBtn">
+                    <i class="fas fa-mobile-alt"></i>
+                    <span class="d-none d-md-inline">Pesanan PWA</span>
+                    <span class="badge bg-danger rounded-pill ms-1 d-none" id="pwaNavBadge" style="font-size:0.65rem;">0</span>
+                </a>
+
                 <!-- Shortcut Help Button -->
                 <button class="btn btn-shortcut-help d-none d-md-flex me-2" onclick="openShortcutGuide()"
                     title="Panduan Shortcut (F1)">
@@ -4845,6 +4861,33 @@
                     .catch(err => console.log('SW registration failed:', err));
             });
         }
+    </script>
+
+    {{-- PWA Orders Badge Polling --}}
+    <script>
+        (function() {
+            const badge = document.getElementById('pwaNavBadge');
+            if (!badge) return;
+
+            async function checkPwaOrders() {
+                try {
+                    const res = await fetch('{{ route("pos.pwa-orders.api.list") }}');
+                    const data = await res.json();
+                    if (data.success && data.stats) {
+                        const pending = data.stats.pending || 0;
+                        if (pending > 0) {
+                            badge.textContent = pending;
+                            badge.classList.remove('d-none');
+                        } else {
+                            badge.classList.add('d-none');
+                        }
+                    }
+                } catch (e) { /* silent */ }
+            }
+
+            checkPwaOrders();
+            setInterval(checkPwaOrders, 15000);
+        })();
     </script>
 </body>
 

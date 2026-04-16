@@ -1,5 +1,5 @@
 // ARTIKA POS - Service Worker
-const CACHE_NAME = 'artika-pos-v3';
+const CACHE_NAME = 'artika-pos-v4';
 const OFFLINE_URL = '/offline.html';
 
 // Static assets to pre-cache

@@ -376,6 +376,11 @@
             transition: all 0.3s ease;
         }
 
+        .main-content.no-sidebar {
+            margin-left: 0;
+            width: 100%;
+        }
+
         .navbar-brand {
             font-weight: 800;
             font-size: 1.5rem;
@@ -960,6 +965,7 @@
             }
         }
     </style>
+    @stack('styles')
 </head>
 
 <body>
@@ -1094,6 +1100,11 @@
                         <a href="{{ route('admin.dashboard') }}"
                             class="sidebar-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                             <i class="fa-solid fa-chart-pie"></i> {{ __('menu.dashboard') }}
+                        </a>
+
+                        <a href="{{ route('pos.pwa-orders') }}"
+                            class="sidebar-link {{ request()->routeIs('pos.pwa-orders') ? 'active' : '' }}">
+                            <i class="fa-solid fa-mobile-screen-button"></i> Pesanan PWA
                         </a>
 
                         <!-- Inventory Group -->
@@ -1474,8 +1485,8 @@
                 </div>
                 <div class="col-md-10 main-content">
             @else
-                    <div class="col-12 main-content">
-                @endif
+                <div class="col-12 main-content no-sidebar">
+            @endif
 
                     @yield('content')
                 </div>
@@ -1770,6 +1781,7 @@
 
 
 
+    @stack('scripts')
 </body>
 
 </html>
